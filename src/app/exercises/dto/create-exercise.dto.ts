@@ -15,5 +15,5 @@ export class CreateExerciseDto {
   category: string
   
   @IsDate()
-  createdAt: string
+  createdAt?: string
 }

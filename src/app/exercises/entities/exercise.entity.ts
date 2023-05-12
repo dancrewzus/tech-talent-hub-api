@@ -13,11 +13,11 @@ export class Exercise extends Document {
   @Prop({ type: String, required: true })
   category: string;
 
-  @Prop({ type: Date, default: Date.now(), index: true })
-  createdAt?: Date;
+  @Prop({ type: String, default: Date.now().toString(), index: true })
+  createdAt?: string;
   
-  @Prop({ type: Date, default: Date.now(), index: true })
-  updatedAt?: Date;
+  @Prop({ type: String, default: Date.now().toString(), index: true })
+  updatedAt?: string;
 }
 
 export const ExerciseSchema = SchemaFactory.createForClass( Exercise )

@@ -1,8 +1,6 @@
 import * as Joi from 'joi';
 
 export const JoiValidationSchema = Joi.object({
-  OPENAI_API_KEY: Joi.required(),
-  OPENAI_ORG_KEY: Joi.required(),
   MONGO_DB_USER: Joi.required(),
   MONGO_DB_PASSWORD: Joi.required(),
   MONGO_DB_CLUSTER: Joi.required(),

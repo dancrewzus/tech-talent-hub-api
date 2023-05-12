@@ -7,7 +7,7 @@ import { join } from 'path'
 import { JoiValidationSchema } from './config/joi.validation'
 import { CommonModule } from './common/common.module'
 import configurationFile from './config/env.config'
-// import { SeedModule } from './seed/seed.module'
+import { SeedModule } from './seed/seed.module'
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import configurationFile from './config/env.config'
       }),
     }),
     CommonModule,
-    // SeedModule,
+    SeedModule,
   ],
 })
 export class AppModule {}
