@@ -111,8 +111,8 @@ This is the list of technologies that i use in the development of this api.
   <a target="_blank" href="https://www.javascript.com">
     <img title="JavaScript" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_60/v1600633849/Landing/javascript.webp"/>
   </a>&nbsp; &nbsp;
-  <a target="_blank" href="https://nestjs.com">
-    <img title="NestJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_60/v1600633849/Landing/typescript.png" alt="Nest Logo"/>
+  <a target="_blank" href="https://www.typescriptlang.org/">
+    <img title="TypeScript" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_60/v1600633849/Landing/typescript.png"/>
   </a>&nbsp; &nbsp;
   <a target="_blank" href="https://nodejs.org/en">
     <img title="NodeJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1600633849/Landing/nodejs.webp"/>
@@ -121,10 +121,10 @@ This is the list of technologies that i use in the development of this api.
     <img title="ExpressJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1651344178/Landing/express.webp"/>
   </a><br><br>
   <a target="_blank" href="https://nestjs.com">
-    <img title="NestJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1600633848/Landing/nest.webp" alt="Nest Logo"/>
+    <img title="NestJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1600633848/Landing/nest.webp"/>
   </a>&nbsp; &nbsp;
-  <a target="_blank" href="https://nestjs.com">
-    <img title="NestJS" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1600633849/Landing/tensorflow.png" alt="Nest Logo"/>
+  <a target="_blank" href="https://www.tensorflow.org">
+    <img title="Tensorflow" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_60,w_160/v1600633849/Landing/tensorflow.png"/>
   </a>&nbsp; &nbsp;
 </p>
 
