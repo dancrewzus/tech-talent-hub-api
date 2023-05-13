@@ -23,6 +23,12 @@ export class WorkoutsController {
     return this.workoutsService.findAll(paginationDto);
   }
 
+  @Get('/predict')
+  predictPerformance(@Query() query) {
+    const { user, exercise, reps, sets } = query
+    return this.workoutsService.predictPerformance({ user, exercise, reps, sets });
+  }
+
   @Get(':search')
   findOne(@Param('search') search: string) {
     return this.workoutsService.findOne(search);
@@ -37,4 +43,6 @@ export class WorkoutsController {
   remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.workoutsService.remove(id);
   }
+
+
 }

@@ -3,9 +3,10 @@ import { InjectModel } from '@nestjs/mongoose/dist'
 import { isValidObjectId, Model } from 'mongoose'
 import { ConfigService } from '@nestjs/config'
 
+import { TensorflowUtil } from 'src/common/utils/tensorflow.util'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
 import { CreateWorkoutDto } from './dto/create-workout.dto'
 import { UpdateWorkoutDto } from './dto/update-workout.dto'
-import { PaginationDto } from 'src/common/dto/pagination.dto'
 import { Workout } from './entities/workout.entity'
 
 @Injectable()
@@ -16,7 +17,8 @@ export class WorkoutsService {
   constructor(
     @InjectModel(Workout.name)
     private readonly workoutModel: Model<Workout>,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly tensorflow: TensorflowUtil,
   ) {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
@@ -29,15 +31,21 @@ export class WorkoutsService {
   }
 
   private handleExceptions = (error: any) => {
-    if(error.code === 11000) {
-      throw new BadRequestException(`Workout already exists. ${ JSON.stringify(error.keyValue) }`)
-    }
-    throw new InternalServerErrorException(`Can't create workout: ${ error }`)
+    throw new InternalServerErrorException(`An error has occurred: ${ error.message }`)
   }
 
   public create = async (createWorkoutDto: CreateWorkoutDto) => {
     try {
       const workout = await this.workoutModel.create(createWorkoutDto)
+      return workout
+    } catch (error) {
+      this.handleExceptions(error)
+    }
+  }
+
+  public insertMany = async (workoutsToInsert: CreateWorkoutDto[]) => {
+    try {
+      const workout = await this.workoutModel.insertMany( workoutsToInsert )
       return workout
     } catch (error) {
       this.handleExceptions(error)
@@ -67,8 +75,8 @@ export class WorkoutsService {
         case 'id':
           workout = await this.workoutModel.findById(search)
           break
-        case 'name':
-          workout = await this.workoutModel.findOne({ name: search.toLocaleLowerCase() })
+        case 'user':
+          workout = await this.workoutModel.findOne({ user: search })
           break
         default:
           workout = null
@@ -96,5 +104,41 @@ export class WorkoutsService {
     if(deletedCount === 0)
       throw new NotFoundException(`Workout with id "${ id }" not found.`)
     return
+  }
+
+  public deleteAll = async () => {
+    await this.workoutModel.deleteMany()
+  }
+
+  /**
+   * Tensorflow
+   */
+
+  public predictPerformance = async (data) => {
+    const { user, exercise, reps, sets } = data
+    try {
+      const workouts: Workout[] = await this.workoutModel.find({ user })
+      const filteredExercises = workouts.flatMap(workout => {
+        return workout.exercises.filter(exercise_ => exercise_.exercise.name === exercise);
+      });
+      const dataset = []
+      filteredExercises.forEach(exercise => {
+        dataset.push({
+          sets: exercise.sets,
+          reps: exercise.reps,
+          weight: exercise.weight,
+        })
+      });
+      const prediction = await this.tensorflow.predictAthleteWeight(
+        dataset, 
+        {
+          reps: Number.parseInt(reps),
+          sets: Number.parseInt(sets),
+        }
+      );
+      return `The weight that the athlete should use is: ${ prediction } kg.`
+    } catch (error) {
+      this.handleExceptions(error)
+    }
   }
 }

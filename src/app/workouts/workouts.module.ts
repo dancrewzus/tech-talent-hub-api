@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { Workout, WorkoutSchema } from './entities/workout.entity';
 import { WorkoutsController } from './workouts.controller';
+import { CommonModule } from 'src/common/common.module';
 import { WorkoutsService } from './workouts.service';
 
 @Module({
@@ -11,6 +12,7 @@ import { WorkoutsService } from './workouts.service';
   providers: [ WorkoutsService ],
   imports: [
     ConfigModule,
+    CommonModule,
     MongooseModule.forFeature([
       {
         name: Workout.name,
@@ -18,6 +20,9 @@ import { WorkoutsService } from './workouts.service';
       }
     ])
   ],
-  exports: [ MongooseModule ]
+  exports: [ 
+    MongooseModule, 
+    WorkoutsService
+  ]
 })
 export class WorkoutsModule {}

@@ -45,6 +45,15 @@ export class ExercisesService {
     }
   }
 
+  public insertMany = async (exercisesToInsert: CreateExerciseDto[]) => {
+    try {
+      const workout = await this.exerciseModel.insertMany( exercisesToInsert )
+      return workout
+    } catch (error) {
+      this.handleExceptions(error)
+    }
+  }
+
   public findAll = async (paginationDto: PaginationDto) => {
     const { limit = this.defaultLimit, offset = 0 } = paginationDto
     try {
@@ -52,7 +61,7 @@ export class ExercisesService {
         .limit( limit )
         .skip( offset )
         .sort({
-          no: 1
+          cratedAt: 1
         })
         .select('-__v')
     } catch (error) {
@@ -98,5 +107,9 @@ export class ExercisesService {
     if(deletedCount === 0)
       throw new NotFoundException(`Exercise with id "${ id }" not found.`)
     return
+  }
+
+  public deleteAll = async () => {
+    await this.exerciseModel.deleteMany()
   }
 }

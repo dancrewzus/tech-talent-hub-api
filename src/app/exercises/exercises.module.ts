@@ -18,6 +18,9 @@ import { ExercisesService } from './exercises.service';
       }
     ])
   ],
-  exports: [ MongooseModule ]
+  exports: [
+    MongooseModule,
+    ExercisesService
+  ]
 })
 export class ExercisesModule {}
