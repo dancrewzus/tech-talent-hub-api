@@ -1,4 +1,4 @@
-const generateDBUri = (user: String, password: String, cluster: String): String => {
+const generateDBUri = (user: string, password: string, cluster: string): string => {
   return `mongodb+srv://${ user }:${ password }@${ cluster }/?retryWrites=true&w=majority`;
 }
 
