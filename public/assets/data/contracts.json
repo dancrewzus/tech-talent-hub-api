@@ -1,8 +1,8 @@
 [
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-0",
     "client": "Harry Potter",
-    "modality": "daily",
+    "modality": "Diário",
     "loanAmount": 100,
     "percent": 5,
     "payments": 10,
@@ -13,9 +13,9 @@
     "payment": false
   },
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-1",
     "client": "Ron Weasley",
-    "modality": "daily",
+    "modality": "Diário",
     "loanAmount": 150,
     "percent": 5,
     "payments": 15,
@@ -26,9 +26,9 @@
     "payment": false
   },
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-2",
     "client": "Hermione Granger",
-    "modality": "daily",
+    "modality": "Diário",
     "loanAmount": 200,
     "percent": 5,
     "payments": 20,

@@ -1,6 +1,6 @@
 [
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-0",
     "name": "Harry Potter",
     "email": "hpotter@hogwarts.magic",
     "phoneNumber": "789456123",
@@ -10,7 +10,7 @@
     "payment": false
   },
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-1",
     "name": "Ron Weasley",
     "email": "hpotter@hogwarts.magic",
     "phoneNumber": "789456123",
@@ -20,7 +20,7 @@
     "payment": false
   },
   {
-    "cpf": "12.345.678-9",
+    "cpf": "12.345.678-2",
     "name": "Hermione Granger",
     "email": "hpotter@hogwarts.magic",
     "phoneNumber": "789456123",
