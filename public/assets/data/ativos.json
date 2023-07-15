@@ -1,32 +1,38 @@
 [
   {
     "cpf": "12.345.678-0",
-    "name": "Harry Potter",
+    "name": "Harry",
+    "lastname": "Potter",
     "email": "hpotter@hogwarts.magic",
-    "phoneNumber": "789456123",
+    "phone": "654650465",
     "residenceAddress": "Privet Drive Nro. 4",
     "billingAddress": "Hogwarts",
     "state": "ok",
-    "payment": false
+    "payment": false,
+    "system": true
   },
   {
     "cpf": "12.345.678-1",
-    "name": "Ron Weasley",
+    "name": "Ron",
+    "lastname": "Weasley",
     "email": "hpotter@hogwarts.magic",
-    "phoneNumber": "789456123",
+    "phone": "789456123",
     "residenceAddress": "Privet Drive Nro. 4",
     "billingAddress": "Hogwarts",
     "state": "avançado",
-    "payment": false
+    "payment": false,
+    "system": false
   },
   {
     "cpf": "12.345.678-2",
-    "name": "Hermione Granger",
+    "name": "Hermione",
+    "lastname": "Granger",
     "email": "hpotter@hogwarts.magic",
-    "phoneNumber": "789456123",
+    "phone": "68730018869",
     "residenceAddress": "Privet Drive Nro. 4",
     "billingAddress": "Hogwarts",
     "state": "tarde",
-    "payment": true
+    "payment": true,
+    "system": true
   }
 ]
