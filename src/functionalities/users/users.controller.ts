@@ -29,19 +29,19 @@ export class UsersController {
 
   @Get(':search')
   @Auth()
-  findOne(@Param('search') search: String) {
+  findOne(@Param('search') search: string) {
     return this.usersService.findOne(search);
   }
 
   @Patch(':search')
   @Auth()
-  update(@Param('search') search: String, @Body() updateUserDto: UpdateUserDto) {
+  update(@Param('search') search: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(search, updateUserDto);
   }
 
   @Delete(':id')
   @Auth()
-  remove(@Param('id', ParseMongoIdPipe) id: String) {
+  remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.usersService.remove(id);
   }
 }

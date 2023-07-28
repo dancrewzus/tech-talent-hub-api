@@ -23,11 +23,39 @@ export class AuthService {
 
   private getJwtToken = (payload: JwtPayload) => this.jwtService.sign(payload)
 
+  private getUserPermissions = (roleName: string): string => {
+    switch (roleName) {
+      case 'root': return 'Rt';
+      case 'admin': return 'Adm';
+      case 'client': return 'Clt';
+      case 'collector': return 'Cll';
+      default: return '';
+    }
+  }
+
   private formatReturnData = (user: User) => {
-    const { id, cpf, data } = user
+  
+    const permission: string = user.role 
+      ? this.getUserPermissions(user.role.name) 
+      : ''
+      
     return {
-      user: { id, cpf, data },
-      token: this.getJwtToken({ id: `${ id }` })
+      token: this.getJwtToken({ id: `${ user.id }` }),
+      user: {
+        permission,
+        id: user.id,
+        cpf: user.cpf,
+        email: user.email,
+        firstName: user.data?.firstName || '',
+        secondName: user.data?.secondName || '',
+        paternalSurname: user.data?.paternalSurname || '',
+        maternalSurname: user.data?.maternalSurname || '',
+        birthDate: user.data?.birthDate || '',
+        profilePicture: user.data?.profilePicture || '',
+        residenceAddress: user.data?.residenceAddress || '',
+        billingAddress: user.data?.billingAddress || '',
+        phoneNumber: user.data?.phoneNumber || '',
+      },
     }
   }
 
@@ -45,7 +73,10 @@ export class AuthService {
   public login = async (loginDto: LoginDto) => {
     try {
       const { password, cpf } = loginDto;
-      const user = await this.userModel.findOne({ cpf: cpf.toLowerCase().trim() }).select('email cpf password id isActive data').populate({ path: 'data' })
+      const user = await this.userModel.findOne({ cpf: cpf.toLowerCase().trim() })
+                                       .select('email cpf password id isActive data')
+                                       .populate({ path: 'data' })
+                                       .populate({ path: 'role' })
       const isValidPassword = await this.validatePassword(`${ password }`, `${ user?.password }`)
       if(!user || !isValidPassword) {
         throw new UnauthorizedException('Invalid credentials')

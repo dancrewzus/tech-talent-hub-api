@@ -29,21 +29,20 @@ export class UsersService {
   private populateRole = { path: 'role', select: 'name' }
   private populateUserData = { path: 'data', select: 'firstName secondName paternalSurname maternalSurname birthDate profilePicture' }
 
-  private searchType = (search: String | number): String => {
-    let type: String = 'invalid'
+  private searchType = (search: string | number): string => {
     if(isValidObjectId(search)) return 'id'
-    if(isNaN(Number(search))) return 'email'
-    return type
+    if(isNaN(Number(search))) return 'cpf'
+    return 'invalid'
   }
   
   public create = async (createUserDto: CreateUserDto) => {
     try {
       const { role, password, ...userData } = createUserDto;
-      const databaseRole = await this.roleService.findOne(role as String || 'athlete' as String)
+      const databaseRole = await this.roleService.findOne(role as string || 'athlete' as string)
       if(!databaseRole) {
         throw new NotFoundException(`Role with id "${ role }" not found`)
       }
-      userData.email = userData.email.toLowerCase().trim();
+      userData.cpf = userData.cpf.toLowerCase().trim();
       const user = await this.userModel.create({
         password: bcrypt.hashSync(`${ password }`, 10),
         role: databaseRole.id, 
@@ -71,7 +70,7 @@ export class UsersService {
     }
   }
 
-  public findOne = async (search: String) => {
+  public findOne = async (search: string) => {
     try {
       let user: User;
       const searchTypeResponse = this.searchType(search)
@@ -82,8 +81,8 @@ export class UsersService {
                     .populate(this.populateRole)
                     .populate(this.populateUserData)
             break;
-          case 'email':
-            user = await this.userModel.findOne({ email: search.toLocaleLowerCase() })
+          case 'cpf':
+            user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
                     .populate(this.populateRole)
                     .populate(this.populateUserData)
             break;
@@ -103,10 +102,10 @@ export class UsersService {
     }
   }
 
-  public update = async (search: String, updateUserDto: UpdateUserDto) => {
+  public update = async (search: string, updateUserDto: UpdateUserDto) => {
     const user = await this.findOne(search)
     try {
-      updateUserDto.email = updateUserDto.email.toLowerCase().trim();
+      updateUserDto.cpf = updateUserDto.cpf.toLowerCase().trim();
       await user.updateOne(updateUserDto)
       return { ...user.toJSON(), ...updateUserDto }
     } catch (error) {
@@ -114,7 +113,7 @@ export class UsersService {
     }
   }
 
-  public remove = async (id: String) => {
+  public remove = async (id: string) => {
     try {
       const { deletedCount } = await this.userModel.deleteOne({ _id: id })
       if(deletedCount === 0)

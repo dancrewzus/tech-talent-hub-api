@@ -13,7 +13,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     example: '334.678.543-90',
-    description: 'Cadastro de Pessoas Físicas.',
+    description: 'User CPF (Cadastro de Pessoas Físicas).',
     required: true,
   })
   @IsString()

@@ -11,7 +11,7 @@ export class Role extends Document {
   
   @ApiProperty({ example: 'Administrator', description: 'Role name', uniqueItems: true })
   @Prop({ type: String, required: true, unique: true })
-  name: String;
+  name: string;
   
   @ApiProperty({ example: false, description: 'It\'s used as default.' })
   @Prop({ type: Boolean, default: false })
@@ -23,11 +23,11 @@ export class Role extends Document {
   
   @ApiProperty({ example: Date.now(), description: 'Creation date.' })
   @Prop({ type: String, default: Date.now() })
-  createdAt?: String;
+  createdAt?: string;
   
   @ApiProperty({ example: Date.now(), description: 'Updated date.' })
   @Prop({ type: String, default: Date.now() })
-  updatedAt?: String;
+  updatedAt?: string;
   
   // RELATION DATA
  

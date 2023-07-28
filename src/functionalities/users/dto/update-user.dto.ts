@@ -4,9 +4,9 @@ import { UserData } from '../../user-data/entities/user-data.entity';
 
 export class UpdateUserDto {
   
-  @IsEmail()
+  @IsString()
   @IsOptional()
-  email?: String
+  cpf?: string
 
   @IsObject()
   @IsOptional()
@@ -14,5 +14,5 @@ export class UpdateUserDto {
   
   @IsBoolean()
   @IsOptional()
-  isActive?: Boolean
+  isActive?: boolean
 }
