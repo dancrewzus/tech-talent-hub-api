@@ -1,20 +1,19 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+// import * as dayjs from 'dayjs'
 
-import { CreateContractDto } from './dto/create-contract.dto';
-import { HandleErrors } from '../../common/utils/handleErrors.util';
-import { Contract } from './entities/contracts.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { User } from '../users/entities/user.entity';
+import { HandleErrors } from '../../common/utils/handleErrors.util'
+import { CreateContractDto } from './dto/create-contract.dto'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
+import { Contract } from './entities/contracts.entity'
+import { User } from '../users/entities/user.entity'
 
 @Injectable()
 export class ContractsService {
 
   private defaultLimit: number;
-
-  private populate = { path: 'exercise', select: 'name slug imageUrl' }
 
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
@@ -27,11 +26,9 @@ export class ContractsService {
 
   public create = async (createContractDto: CreateContractDto, userRequest: User) => {
     try {
-      const { createdBy, client, ...contractData } = createContractDto
-      if(userRequest.id !== createdBy) {
-        throw new BadRequestException(`Invalid user`)
-      }
-      const clientExist = await this.userModel.findOne({ id: client })
+      console.log("🚀 ~ file: contracts.service.ts:27 ~ ContractsService ~ create= ~ createContractDto:", createContractDto)
+      const { client, ...contractData } = createContractDto
+      const clientExist = await this.userModel.findOne({ _id: client })
       if(!clientExist) {
         throw new BadRequestException(`Invalid client`)
       }
@@ -52,10 +49,7 @@ export class ContractsService {
       return await this.contractModel.find()
         .limit( limit )
         .skip( offset )
-        .sort({
-          cratedAt: 1
-        })
-        .populate(this.populate)
+        .sort({ createdAt: 'asc' })
         .populate({ path: 'user' })
     } catch (error) {
       
@@ -64,10 +58,11 @@ export class ContractsService {
 
   public findMany = async (search: string) => {
     try {
-      const contractsByUser = await this.contractModel.find({ user: search }).populate(this.populate)
+      const contractsByUser: Contract[] = await this.contractModel.find({ client: search }).sort({ createdAt: 'asc' })
       if(!contractsByUser) {
         throw new NotFoundException(`Contracts of user "${ search }" not found`)
       }
+      // contractsByUser.sort((a, b) => (dayjs(a.createdAt).isAfter(dayjs(b.createdAt)) ? 1 : -1))
       return contractsByUser;
     } catch (error) {
       this.handleErrors.handleExceptions(error)
@@ -76,7 +71,7 @@ export class ContractsService {
 
   public findOne = async (search: string) => {
     try {
-      const contractById = await this.contractModel.findById(search).populate(this.populate)
+      const contractById = await this.contractModel.findById(search)
       if(!contractById) {
         throw new NotFoundException(`Contract with id "${ search }" not found`)
       }

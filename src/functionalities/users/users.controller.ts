@@ -24,7 +24,13 @@ export class UsersController {
   @Get()
   @Auth()
   findAll(@Query() paginationDto: PaginationDto) {
-    return this.usersService.findAll(paginationDto);
+    return this.usersService.findUsers(paginationDto);
+  }
+  
+  @Get('clients')
+  @Auth()
+  findClients(@Query() paginationDto: PaginationDto) {
+    return this.usersService.findClients(paginationDto);
   }
 
   @Get(':search')

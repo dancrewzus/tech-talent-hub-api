@@ -27,7 +27,45 @@ export class UsersService {
   }
 
   private populateRole = { path: 'role', select: 'name' }
-  private populateUserData = { path: 'data', select: 'firstName secondName paternalSurname maternalSurname birthDate profilePicture' }
+  private populateUserData = { path: 'data' }
+
+  private getUserPermissions = (roleName: string): string => {
+    switch (roleName) {
+      case 'root': return 'Rt';
+      case 'admin': return 'Adm';
+      case 'client': return 'Clt';
+      case 'collector': return 'Cll';
+      default: return '';
+    }
+  }
+
+  private capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  private formatReturnData = (user: User) => {
+    if(!user.isActive) return
+    const permission: string = user.role 
+      ? this.getUserPermissions(user.role.name) 
+      : ''
+
+    return {
+      permission,
+      id: user.id,
+      cpf: user.cpf,
+      email: user.email,
+      fullname: `${ this.capitalizeFirstLetter(user.data?.firstName) } ${ this.capitalizeFirstLetter(user.data?.paternalSurname) }` || '',
+      firstName: this.capitalizeFirstLetter(user.data?.firstName) || '',
+      secondName: this.capitalizeFirstLetter(user.data?.secondName) || '',
+      paternalSurname: this.capitalizeFirstLetter(user.data?.paternalSurname) || '',
+      maternalSurname: this.capitalizeFirstLetter(user.data?.maternalSurname) || '',
+      birthDate: user.data?.birthDate || '',
+      profilePicture: user.data?.profilePicture || '',
+      residenceAddress: user.data?.residenceAddress || '',
+      billingAddress: user.data?.billingAddress || '',
+      phoneNumber: user.data?.phoneNumber || '',
+    }
+  }
 
   private searchType = (search: string | number): string => {
     if(isValidObjectId(search)) return 'id'
@@ -37,24 +75,30 @@ export class UsersService {
   
   public create = async (createUserDto: CreateUserDto) => {
     try {
-      const { role, password, ...userData } = createUserDto;
-      const databaseRole = await this.roleService.findOne(role as string || 'athlete' as string)
+      const { cpf, role, password, email, data } = createUserDto;
+      const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
       if(!databaseRole) {
-        throw new NotFoundException(`Role with id "${ role }" not found`)
+        throw new NotFoundException(`Role with id or name "${ role }" not found`)
       }
-      userData.cpf = userData.cpf.toLowerCase().trim();
       const user = await this.userModel.create({
-        password: bcrypt.hashSync(`${ password }`, 10),
+        password: bcrypt.hashSync(`${ password ? password : cpf }`, 10),
         role: databaseRole.id, 
-        ...userData
+        email,
+        cpf,
       });
-      return user
+      if(data) {
+        const createdData = await this.userDataService.create({ ...data, user: user._id })
+        await this.userModel.updateOne({ _id: user._id }, { data: createdData._id });
+        user.data = createdData
+      }
+      user.role = databaseRole
+      return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
   }
 
-  public findAll = async (paginationDto: PaginationDto) => {
+  public findUsers = async (paginationDto: PaginationDto) => {
     const { limit = this.defaultLimit, offset = 0 } = paginationDto;
     try {
       return await this.userModel.find()
@@ -65,6 +109,27 @@ export class UsersService {
         })
         .populate(this.populateRole)
         .populate(this.populateUserData)
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+  
+  public findClients = async (paginationDto: PaginationDto) => {
+    const databaseRole = await this.roleService.findOne('client' as string)
+    if(!databaseRole) {
+      throw new NotFoundException(`Role with name "client" not found`)
+    }
+    // const { limit = this.defaultLimit, offset = 0 } = paginationDto;
+    try {
+      const clients = await this.userModel.find({ role: databaseRole.id, isActive: true })
+        // .limit( limit )
+        // .skip( offset )
+        .sort({
+          cratedAt: 1
+        })
+        .populate(this.populateRole)
+        .populate(this.populateUserData)
+      return clients.map((client) => this.formatReturnData(client))
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

@@ -56,17 +56,17 @@ export class ContractsController {
   ) {
     return this.contractService.findOne(search)
   }
-  
-  @Get('/user/:search')
+
+  @Get('/user/:id')
   @Auth()
   @ApiResponse({ status: 200, description: 'Contract found', type: Contract })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not found' })
   @ApiResponse({ status: 500, description: 'Internal error.' })
-  findMany(
-    @Param('search') search: string
+  findByUser(
+    @Param('id') id: string
   ) {
-    return this.contractService.findMany(search)
+    return this.contractService.findMany(id)
   }
   
   @Delete(':id')

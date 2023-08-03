@@ -1,15 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsString, IsOptional, IsEmail, Matches, MaxLength, MinLength } from 'class-validator'
+import { IsBoolean, IsString, IsOptional, IsEmail, Matches, MaxLength, MinLength, IsObject } from 'class-validator'
 
 export class CreateUserDto {
 
-  @ApiProperty({
-    example: 'adumbledore@howarts.magic',
-    description: 'User email.',
-    uniqueItems: true,
-  })
-  @IsEmail() 
-  email: string
+  // cpf      : '',
+  // email    : '',
+  
+  // name     : '',
+  // lastname : '',
+  // gender   : '',
+  // residence: '',
+  // work     : '',
+  // phone    : '',
 
   @ApiProperty({
     example: '334.678.543-90',
@@ -17,8 +19,16 @@ export class CreateUserDto {
     required: true,
   })
   @IsString()
-  @MinLength(14)
+  @MinLength(10)
   cpf: string
+  
+  @ApiProperty({
+    example: 'adumbledore@howarts.magic',
+    description: 'User email.',
+    uniqueItems: true,
+  })
+  @IsEmail() 
+  email: string
   
   @ApiProperty({
     example: 'ADumbledore_1881',
@@ -30,8 +40,9 @@ export class CreateUserDto {
   @Matches(
     /(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message: 'The password must have a Uppercase, lowercase letter and a number'
-  }) 
-  password: string
+  })
+  @IsOptional()
+  password?: string
   
   @IsBoolean() 
   @IsOptional() 
@@ -46,4 +57,16 @@ export class CreateUserDto {
   @MinLength(6)
   @IsOptional() 
   role?: string
+
+  /**
+   * USER DATA
+   */
+
+  @ApiProperty({
+    example: '{ name: "Albus", lastname: "Dumbledore" }',
+    description: 'User data.',
+  })
+  @IsOptional()
+  @IsObject() 
+  data?: any
 }

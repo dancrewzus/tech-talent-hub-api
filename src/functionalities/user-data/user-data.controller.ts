@@ -17,12 +17,12 @@ export class UserDataController {
   }
 
   @Get(':search')
-  findOne(@Param('search') search: String) {
+  findOne(@Param('search') search: string) {
     return this.userDataService.findOne(search);
   }
 
   @Patch(':search')
-  update(@Param('search') search: String, @Body() updateUserDataDto: UpdateUserDataDto) {
+  update(@Param('search') search: string, @Body() updateUserDataDto: UpdateUserDataDto) {
     return this.userDataService.update(search, updateUserDataDto);
   }
 }

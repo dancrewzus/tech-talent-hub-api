@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
+import * as dayjs from 'dayjs'
 
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -18,6 +19,10 @@ export class Contract extends Document {
   @ApiProperty({ type: String, description: 'Payment method', example: 'daily' })
   @Prop({ type: String, required: true, enum: [ 'daily', 'weekly' ] })
   modality: string;
+
+  @ApiProperty({ description: 'Modality options', example: '10-11 (Where => 10% 11 days)' })
+  @Prop({ type: String, default: '' })
+  modalityOptions: string;
 
   @ApiProperty({ type: Number, description: 'Loan amount', example: 120 })
   @Prop({ type: Number, required: true })
@@ -47,16 +52,16 @@ export class Contract extends Document {
   @Prop({ type: Boolean, default: true })
   status: boolean;
 
-  @ApiProperty({ example: Date.now(), description: 'Last contract date.' })
-  @Prop({ type: String, default: Date.now() })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Last contract date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
   lastContractDate?: string;
   
-  @ApiProperty({ example: Date.now(), description: 'Creation date.' })
-  @Prop({ type: String, default: Date.now() })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Creation date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
   createdAt?: string;
   
-  @ApiProperty({ example: Date.now(), description: 'Updated date.' })
-  @Prop({ type: String, default: Date.now() })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Updated date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
   updatedAt?: string;
 }
 

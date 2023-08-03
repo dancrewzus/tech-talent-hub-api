@@ -1,22 +1,51 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsNumber, IsPositive, IsString, Min } from 'class-validator'
+import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator'
 
 import { MethodsEnum } from 'src/common/interfaces/methods.enum'
 
 export class CreateContractDto {
-  
-  @ApiProperty({ type: String, description: 'User creator ID', example: '6472d32b20f00d485b965c1e' })
-  @IsString()
-  createdBy: string
+
+  // client: string;
+  // lastContract: string;
+  // modality: string;
+  // modalityOptions: string;
+  // loanAmount: string;
+  // percent: string;
+  // payments: string;
+  // totalAmount: string;
+  // paymentAmount: string;
+  // dailySunday: string;
+  // dailyMonday: string;
+  // dailyTuesday: string;
+  // dailyWednesday: string;
+  // dailyThursday: string;
+  // dailyFriday: string;
+  // dailySaturday: string;
+  // weeklySunday: string;
+  // weeklyMonday: string;
+  // weeklyTuesday: string;
+  // weeklyWednesday: string;
+  // weeklyThursday: string;
+  // weeklyFriday: string;
+  // weeklySaturday: string;
   
   @ApiProperty({ type: String, description: 'Client ID', example: '6472d32b20f00d485b965c1e' })
   @IsString()
   client: string
   
+  @ApiProperty({ type: String, description: 'Last contract date', example: '01/01/1900' })
+  @IsString()
+  @IsOptional()
+  lastContractDate?: string
+  
   @ApiProperty({ type: String, description: 'Payment method', example: 'daily' })
   @IsString()
   @IsEnum(MethodsEnum)
   modality: string
+  
+  @ApiProperty({ type: String, description: 'Modality options', example: '10-11 (Where => 10% 11 days)' })
+  @IsString()
+  modalityOptions: string
 
   @ApiProperty({ type: Number, description: 'Loan amount', example: 120 })
   @IsNumber()

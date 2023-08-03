@@ -8,7 +8,6 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateUserDataDto } from './dto/create-user-data.dto';
 import { UpdateUserDataDto } from './dto/update-user-data.dto';
 import { UserData } from './entities/user-data.entity';
-import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class UserDataService {
@@ -25,21 +24,15 @@ export class UserDataService {
 
   private populate = { path: 'user', select: 'email isActive' }
 
-  private searchType = (search: String | number): String => {
-    let type: String = 'invalid'
+  private searchType = (search: string | number): string => {
     if(isValidObjectId(search)) return 'id'
     if(isNaN(Number(search))) return 'name'
-    return type
+    return 'invalid'
   }
   
   public create = async (createUserDataDto: CreateUserDataDto) => {
     try {
-      createUserDataDto.firstName = createUserDataDto.firstName.toLowerCase();
-      createUserDataDto.secondName = createUserDataDto.secondName.toLowerCase();
-      createUserDataDto.paternalSurname = createUserDataDto.paternalSurname.toLowerCase();
-      createUserDataDto.maternalSurname = createUserDataDto.maternalSurname.toLowerCase();
-      const userData = await this.userDataModel.create(createUserDataDto);
-      return userData;
+      return this.userDataModel.create(createUserDataDto);
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
@@ -61,7 +54,7 @@ export class UserDataService {
     }
   }
 
-  public findOne = async (search: String) => {
+  public findOne = async (search: string) => {
     let userData: UserData;
     const searchTypeResponse = this.searchType(search)
     try {
@@ -83,7 +76,7 @@ export class UserDataService {
     return userData;
   }
 
-  public update = async (search: String, updateUserDataDto: UpdateUserDataDto) => {
+  public update = async (search: string, updateUserDataDto: UpdateUserDataDto) => {
     const userData = await this.findOne(search)
     try {
       await userData.updateOne(updateUserDataDto)
@@ -93,7 +86,7 @@ export class UserDataService {
     }
   }
 
-  public remove = async (id: String) => {
+  public remove = async (id: string) => {
     const { deletedCount } = await this.userDataModel.deleteOne({ _id: id })
     if(deletedCount === 0)
       throw new NotFoundException(`User data with id "${ id }" not found.`)
