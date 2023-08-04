@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
+import * as dayjs from 'dayjs'
 
 import { User } from '../../users/entities/user.entity';
 
@@ -21,12 +22,12 @@ export class Role extends Document {
   @Prop({ type: Boolean, default: true })
   status: boolean;
   
-  @ApiProperty({ example: Date.now(), description: 'Creation date.' })
-  @Prop({ type: String, default: Date.now() })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   createdAt?: string;
   
-  @ApiProperty({ example: Date.now(), description: 'Updated date.' })
-  @Prop({ type: String, default: Date.now() })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   updatedAt?: string;
   
   // RELATION DATA

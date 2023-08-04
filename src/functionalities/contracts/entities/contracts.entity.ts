@@ -56,12 +56,12 @@ export class Contract extends Document {
   @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
   lastContractDate?: string;
   
-  @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Creation date.' })
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   createdAt?: string;
   
-  @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Updated date.' })
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
+  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   updatedAt?: string;
 }
 

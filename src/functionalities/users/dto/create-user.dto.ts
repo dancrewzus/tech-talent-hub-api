@@ -14,21 +14,21 @@ export class CreateUserDto {
   // phone    : '',
 
   @ApiProperty({
-    example: '334.678.543-90',
+    example: '33467854390',
     description: 'User CPF (Cadastro de Pessoas Físicas).',
     required: true,
   })
   @IsString()
-  @MinLength(10)
+  @MinLength(5)
   cpf: string
   
   @ApiProperty({
     example: 'adumbledore@howarts.magic',
     description: 'User email.',
-    uniqueItems: true,
   })
-  @IsEmail() 
-  email: string
+  @IsOptional()
+  @IsString()
+  email?: string
   
   @ApiProperty({
     example: 'ADumbledore_1881',

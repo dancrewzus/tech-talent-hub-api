@@ -16,7 +16,7 @@ export class LoginDto {
     required: true,
   })
   @IsString()
-  @MinLength(12)
+  @MinLength(5)
   cpf: string
   
   @ApiProperty({

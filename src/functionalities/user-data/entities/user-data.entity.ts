@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
+import * as dayjs from 'dayjs'
 
 import { User } from '../../users/entities/user.entity';
 
@@ -36,10 +37,10 @@ export class UserData extends Document {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   user: User;
 
-  @Prop({ type: String, default: Date.now() })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   createdAt?: string;
   
-  @Prop({ type: String, default: Date.now() })
+  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   updatedAt?: string;
 }
 

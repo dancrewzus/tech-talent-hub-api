@@ -35,19 +35,19 @@ export class SeedData {
   public getUsers = () => [
     {
       email: 'root@imperial.pronto',
-      cpf: '12.345.678-9',
+      cpf: '123456789',
       password: 'ROOTimperial_23',
       role: 'root',
     },
     {
       email: 'adumbledore@howarts.magic',
-      cpf: '12.345.678-0',
+      cpf: '123456780',
       password: 'ADumbledore_1881',
       role: 'collector',
     },
     {
       email: 'hpotter@howarts.magic',
-      cpf: '12.345.678-1',
+      cpf: '123456781',
       password: 'Nimbus_2000',
       role: 'client',
     },
