@@ -25,6 +25,7 @@ export class SeedService {
   }
 
   private seedAuthenticationData = async () => {
+    // TODO: Delete contracts and payments
     // ROLES Seed
     await this.roleModel.deleteMany()
     const rolesToInsert = this.seedData.getRoles()

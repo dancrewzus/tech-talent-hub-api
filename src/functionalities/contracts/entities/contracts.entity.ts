@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import * as dayjs from 'dayjs'
 
 import { User } from '../../users/entities/user.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { Payment } from 'src/functionalities/payments/payments/entities/payment.entity';
 
 @Schema()
 export class Contract extends Document {
@@ -55,6 +56,10 @@ export class Contract extends Document {
   @ApiProperty({ example: dayjs().format('DD/MM/YYYY'), description: 'Last contract date.' })
   @Prop({ type: String, default: dayjs().format('DD/MM/YYYY') })
   lastContractDate?: string;
+
+  @ApiProperty({ description: 'List of payments.', type: [String] })
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }], select: false })
+  paymentList: Payment[];
   
   @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
   @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })

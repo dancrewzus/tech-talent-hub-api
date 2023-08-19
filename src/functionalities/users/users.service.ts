@@ -54,6 +54,7 @@ export class UsersService {
       id: user.id,
       cpf: user.cpf,
       email: user.email,
+      isLogged: user.isLogged,
       fullname: `${ this.capitalizeFirstLetter(user.data?.firstName) } ${ this.capitalizeFirstLetter(user.data?.paternalSurname) }` || '',
       firstName: this.capitalizeFirstLetter(user.data?.firstName) || '',
       secondName: this.capitalizeFirstLetter(user.data?.secondName) || '',
@@ -114,7 +115,7 @@ export class UsersService {
     }
   }
   
-  public findClients = async (paginationDto: PaginationDto) => {
+  public findClients = async (/* paginationDto: PaginationDto */) => {
     const databaseRole = await this.roleService.findOne('client' as string)
     if(!databaseRole) {
       throw new NotFoundException(`Role with name "client" not found`)

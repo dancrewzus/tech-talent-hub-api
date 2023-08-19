@@ -15,6 +15,27 @@ export class ContractsService {
 
   private defaultLimit: number;
 
+  private formatReturnData = (contract: Contract) => {
+    return {
+      id: contract.id,
+      createdBy: contract.createdBy || '',
+      client: contract.client || '',
+      modality: contract.modality || '',
+      modalityOptions: contract.modalityOptions || '',
+      loanAmount: contract.loanAmount || '',
+      percent: contract.percent || '',
+      payments: contract.payments || '',
+      paymentAmount: contract.paymentAmount || '',
+      totalAmount: contract.totalAmount || '',
+      nonWorkingDays: contract.nonWorkingDays || '',
+      status: contract.status || '',
+      lastContractDate: contract.lastContractDate || '',
+      paymentList: contract.paymentList || [],
+      createdAt: contract.createdAt || '',
+      updatedAt: contract.updatedAt || '',
+    }
+  }
+
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
@@ -26,7 +47,6 @@ export class ContractsService {
 
   public create = async (createContractDto: CreateContractDto, userRequest: User) => {
     try {
-      console.log("🚀 ~ file: contracts.service.ts:27 ~ ContractsService ~ create= ~ createContractDto:", createContractDto)
       const { client, ...contractData } = createContractDto
       const clientExist = await this.userModel.findOne({ _id: client })
       if(!clientExist) {
@@ -58,12 +78,14 @@ export class ContractsService {
 
   public findMany = async (search: string) => {
     try {
-      const contractsByUser: Contract[] = await this.contractModel.find({ client: search }).sort({ createdAt: 'asc' })
+      const contractsByUser = await this.contractModel
+        .find({ client: search })
+        .sort({ createdAt: 'asc' })
+        .populate('paymentList')
       if(!contractsByUser) {
         throw new NotFoundException(`Contracts of user "${ search }" not found`)
       }
-      // contractsByUser.sort((a, b) => (dayjs(a.createdAt).isAfter(dayjs(b.createdAt)) ? 1 : -1))
-      return contractsByUser;
+      return contractsByUser.map((contract) => this.formatReturnData(contract));
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

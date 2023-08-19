@@ -28,6 +28,9 @@ export class User extends Document {
   
   @Prop({ type: Boolean, required: false, default: true })
   isActive: boolean;
+  
+  @Prop({ type: Boolean, required: false, default: false })
+  isLogged: boolean;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Role', required: true })
   role: Role;

@@ -46,6 +46,7 @@ export class AuthService {
         id: user.id,
         cpf: user.cpf,
         email: user.email,
+        isLogged: user.isLogged,
         firstName: user.data?.firstName || '',
         secondName: user.data?.secondName || '',
         paternalSurname: user.data?.paternalSurname || '',
@@ -74,7 +75,7 @@ export class AuthService {
     try {
       const { password, cpf } = loginDto;
       const user = await this.userModel.findOne({ cpf: cpf.toLowerCase().trim() })
-                                       .select('email cpf password id isActive data')
+                                       .select('email cpf password id isActive')
                                        .populate({ path: 'data' })
                                        .populate({ path: 'role' })
       const isValidPassword = await this.validatePassword(`${ password }`, `${ user?.password }`)
@@ -84,6 +85,13 @@ export class AuthService {
       if(!user.isActive) {
         throw new UnauthorizedException('Inactive user')
       }
+      await this.userModel.updateOne(
+        { _id: user._id },
+        {
+          isLogged: true
+        }
+      )
+      user.isLogged = true
       return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
