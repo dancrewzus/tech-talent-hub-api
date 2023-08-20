@@ -16,7 +16,7 @@ export class ContractsService {
   private defaultLimit: number;
 
   private formatReturnData = (contract: Contract) => {
-    return {
+    const mapped = {
       id: contract.id,
       createdBy: contract.createdBy || '',
       client: contract.client || '',
@@ -34,6 +34,7 @@ export class ContractsService {
       createdAt: contract.createdAt || '',
       updatedAt: contract.updatedAt || '',
     }
+    return mapped
   }
 
   constructor(
@@ -85,7 +86,8 @@ export class ContractsService {
       if(!contractsByUser) {
         throw new NotFoundException(`Contracts of user "${ search }" not found`)
       }
-      return contractsByUser.map((contract) => this.formatReturnData(contract));
+      const contracts = contractsByUser.map((contract) => this.formatReturnData(contract));
+      return contracts
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
