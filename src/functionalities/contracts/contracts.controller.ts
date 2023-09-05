@@ -40,9 +40,31 @@ export class ContractsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   findAll(
-    @Query() paginationDto: PaginationDto
+    @Query('pagination') paginationDto: PaginationDto
   ) {
     return this.contractService.findAll(paginationDto)
+  }
+
+  @Get('/pending')
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contracts with pending payments found', type: [Contract] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  findPendingPayments() {
+    return this.contractService.findPendingPayments()
+  }
+
+  @Get('/user/:id')
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contract found', type: Contract })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  findByUser(
+    @Param('id') id: string
+  ) {
+    return this.contractService.findLastContract(id)
   }
 
   @Get(':search')
@@ -55,18 +77,6 @@ export class ContractsController {
     @Param('search') search: string
   ) {
     return this.contractService.findOne(search)
-  }
-
-  @Get('/user/:id')
-  @Auth()
-  @ApiResponse({ status: 200, description: 'Contract found', type: Contract })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found' })
-  @ApiResponse({ status: 500, description: 'Internal error.' })
-  findByUser(
-    @Param('id') id: string
-  ) {
-    return this.contractService.findMany(id)
   }
   
   @Delete(':id')

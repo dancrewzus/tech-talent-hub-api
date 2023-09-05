@@ -4,10 +4,11 @@ import * as bcrypt from 'bcrypt'
 import { Model } from 'mongoose'
 
 import { Role } from 'src/functionalities/roles/entities/role.entity'
-import { UserData } from '../user-data/entities/user-data.entity'
 import { HandleErrors } from 'src/common/utils/handleErrors.util'
 import { User } from '../users/entities/user.entity';
 import { SeedData } from './data/data.seed'
+import { Contract } from '../contracts/entities/contracts.entity'
+import { Payment } from '../payments/payments/entities/payment.entity'
 
 @Injectable()
 export class SeedService {
@@ -15,7 +16,8 @@ export class SeedService {
   private logger
 
   constructor(
-    @InjectModel(UserData.name) private readonly userDataModel: Model<UserData>,
+    @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
+    @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(Role.name) private readonly roleModel: Model<Role>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
@@ -25,42 +27,31 @@ export class SeedService {
   }
 
   private seedAuthenticationData = async () => {
-    // TODO: Delete contracts and payments
+    // CLEAR contracts and payments
+    await this.contractModel.deleteMany()
+    await this.paymentModel.deleteMany()
     // ROLES Seed
     await this.roleModel.deleteMany()
     const rolesToInsert = this.seedData.getRoles()
     const createdRoles = await this.roleModel.insertMany(rolesToInsert)
     this.logger.log('Roles seeded')
-    
+  
     // USERS Seed
     await this.userModel.deleteMany()
     const primaryRole = createdRoles.find((role) => role.primary)
     const usersBeforeInsert = this.seedData.getUsers()
     const usersToInsert = []
     usersBeforeInsert.forEach((user) => {
-      const { email, cpf, password } = user
-      const role = createdRoles.find((role) => role.name === user.role)
+      const { password, role, ...data } = user
+      const role_ = createdRoles.find((el) => el.name === role)
       usersToInsert.push({
         password: bcrypt.hashSync(`${ password }`, 10),
-        role: role ? role.id : primaryRole.id,
-        email,
-        cpf,
+        role: role_ ? role_.id : primaryRole.id,
+        ...data,
       })
     })
-    const createdUsers = await this.userModel.insertMany(usersToInsert)
+    await this.userModel.insertMany(usersToInsert)
     this.logger.log('Users seeded')
-
-    // DATA Seed
-    await this.userDataModel.deleteMany()
-    const dataToInsert = this.seedData.getUsersData()
-    for (let index = 0; index < createdUsers.length; index++) {
-      const user = createdUsers[index];
-      const userData = dataToInsert[index]
-      userData.user = user.id
-      const createdData = await this.userDataModel.create(userData);
-      await this.userModel.updateOne({ _id: user._id }, { data: createdData._id });
-    }
-    this.logger.log('Users data seeded')
   }
 
   public seedAll = async () => {

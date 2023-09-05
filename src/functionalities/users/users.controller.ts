@@ -6,7 +6,8 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { User } from './entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
@@ -23,14 +24,27 @@ export class UsersController {
 
   @Get()
   @Auth()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.usersService.findUsers(paginationDto);
+  @ApiResponse({ status: 200, description: 'Users found', type: User })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  findAll(
+    @Query('pagination') paginationDto: PaginationDto,
+    @Query('type') type: string
+  ) {
+    return this.usersService.findUsers(paginationDto, type);
   }
   
   @Get('clients')
   @Auth()
-  findClients() {
-    return this.usersService.findClients();
+  @ApiResponse({ status: 200, description: 'Clients found', type: User })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  findClients(
+    @Query('pagination') paginationDto: PaginationDto
+  ) {
+    return this.usersService.findClients(paginationDto);
   }
 
   @Get(':search')

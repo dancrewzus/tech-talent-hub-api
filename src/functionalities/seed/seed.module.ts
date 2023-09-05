@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ConfigModule } from '@nestjs/config'
 
-import { UserData, UserDataSchema } from '../user-data/entities/user-data.entity'
+import { Payment, PaymentSchema } from '../payments/payments/entities/payment.entity'
+import { Contract, ContractSchema } from '../contracts/entities/contracts.entity'
 import { Role, RoleSchema } from '../roles/entities/role.entity'
 import { User, UserSchema } from '../users/entities/user.entity'
 import { CommonModule } from 'src/common/common.module'
@@ -29,8 +30,12 @@ import { SeedData } from './data/data.seed'
         schema: UserSchema
       },
       {
-        name: UserData.name,
-        schema: UserDataSchema
+        name: Contract.name,
+        schema: ContractSchema
+      },
+      {
+        name: Payment.name,
+        schema: PaymentSchema
       },
     ])
   ],

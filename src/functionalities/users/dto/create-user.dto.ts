@@ -1,6 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsString, IsOptional, IsEmail, Matches, MaxLength, MinLength, IsObject } from 'class-validator'
+import {
+  IsBoolean,
+  IsString,
+  IsOptional,
+  IsEmail,
+  Matches,
+  MaxLength,
+  MinLength,
+  IsEnum,
+} from 'class-validator'
 
+export enum genders {
+  male = 'male',
+  female = 'female',
+}
 export class CreateUserDto {
 
   // cpf      : '',
@@ -27,7 +40,7 @@ export class CreateUserDto {
     description: 'User email.',
   })
   @IsOptional()
-  @IsString()
+  @IsEmail()
   email?: string
   
   @ApiProperty({
@@ -63,10 +76,72 @@ export class CreateUserDto {
    */
 
   @ApiProperty({
-    example: '{ name: "Albus", lastname: "Dumbledore" }',
-    description: 'User data.',
+    example: 'Albus',
+    description: 'User name.',
   })
+  @IsString() 
+  firstName: string
+  
+  @IsString()
+  @IsOptional() 
+  secondName?: string
+  
+  @ApiProperty({
+    example: 'Dumbledore',
+    description: 'User lastname.',
+  })
+  @IsString() 
+  paternalSurname: string
+  
+  @IsString()
   @IsOptional()
-  @IsObject() 
-  data?: any
+  maternalSurname?: string
+  
+  @ApiProperty({
+    example: 'Dumbledore',
+    description: 'User lastname.',
+  })
+  @IsString()
+  @IsOptional()
+  birthDate?: string
+  
+  @ApiProperty({
+    example: 'male',
+    description: 'User gender.',
+  })
+  @IsString()
+  @IsEnum(genders)
+  gender: string
+  
+  @ApiProperty({
+    example: '',
+    description: 'User profile picture.',
+  })
+  @IsString()
+  @IsOptional()
+  profilePicture?: string
+
+  @ApiProperty({
+    example: 'Privet Drive Nro. 4',
+    description: 'User residence address.',
+  })
+  @IsString()
+  @MinLength(2)
+  residenceAddress: string
+
+  @ApiProperty({
+    example: 'Hogwarts',
+    description: 'User billing address.',
+  })
+  @IsString()
+  @MinLength(2)
+  billingAddress: string
+  
+  @ApiProperty({
+    example: '123456789',
+    description: 'User phone number.',
+  })
+  @IsString()
+  @MinLength(2)
+  phoneNumber: string
 }

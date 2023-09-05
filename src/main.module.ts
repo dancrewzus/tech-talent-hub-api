@@ -14,7 +14,7 @@ import { AuthModule } from './auth/auth.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configurationFile],
+      load: [ configurationFile ],
       validationSchema: JoiValidationSchema,
     }),
     ServeStaticModule.forRoot({

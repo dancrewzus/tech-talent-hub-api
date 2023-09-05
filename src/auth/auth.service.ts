@@ -47,15 +47,15 @@ export class AuthService {
         cpf: user.cpf,
         email: user.email,
         isLogged: user.isLogged,
-        firstName: user.data?.firstName || '',
-        secondName: user.data?.secondName || '',
-        paternalSurname: user.data?.paternalSurname || '',
-        maternalSurname: user.data?.maternalSurname || '',
-        birthDate: user.data?.birthDate || '',
-        profilePicture: user.data?.profilePicture || '',
-        residenceAddress: user.data?.residenceAddress || '',
-        billingAddress: user.data?.billingAddress || '',
-        phoneNumber: user.data?.phoneNumber || '',
+        firstName: user.firstName || '',
+        secondName: user.secondName || '',
+        paternalSurname: user.paternalSurname || '',
+        maternalSurname: user.maternalSurname || '',
+        birthDate: user.birthDate || '',
+        profilePicture: user.profilePicture || '',
+        residenceAddress: user.residenceAddress || '',
+        billingAddress: user.billingAddress || '',
+        phoneNumber: user.phoneNumber || '',
       },
     }
   }
@@ -74,10 +74,9 @@ export class AuthService {
   public login = async (loginDto: LoginDto) => {
     try {
       const { password, cpf } = loginDto;
-      const user = await this.userModel.findOne({ cpf: cpf.toLowerCase().trim() })
-                                       .select('email cpf password id isActive')
-                                       .populate({ path: 'data' })
-                                       .populate({ path: 'role' })
+      const user = await this.userModel
+        .findOne({ cpf: cpf.toLowerCase().trim() })
+        .populate({ path: 'role' })
       const isValidPassword = await this.validatePassword(`${ password }`, `${ user?.password }`)
       if(!user || !isValidPassword) {
         throw new UnauthorizedException('Invalid credentials')

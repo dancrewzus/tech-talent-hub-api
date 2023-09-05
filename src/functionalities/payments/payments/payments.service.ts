@@ -26,32 +26,58 @@ export class PaymentsService {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
 
-  public create = async (createPaymentDto: CreatePaymentDto, userRequest: User) => {
-    const { client, contract, amount, paymentDate, paymentNumber } = createPaymentDto
+  public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
     try {
+
+      const { client, contract } = createPaymentsDto[0]
+
       const clientId = new BSON.ObjectId( client )
       const contractExist = await this.contractModel
         .findOne({ _id: contract })
         .populate('client')
         .populate('paymentList')
+
       if(!contractExist) {
         throw new BadRequestException(`Invalid contract`)
       }
+
       if(!contractExist.client._id.equals(clientId)) {
         throw new BadRequestException(`Invalid client`)
       }
-      // TODO: Manage images
-      const payment = await this.paymentModel.create({
-        createdBy: userRequest.id,
-        client,
-        contract,
-        amount,
-        paymentNumber,
-        paymentDate,
-      });
-      contractExist.paymentList.push(payment);
-      await contractExist.save();
-      return payment;
+
+      for (let index = 0; index < createPaymentsDto.length; index++) {
+        const createPaymentDto = createPaymentsDto[index];
+        const { client, contract, amount, paymentDate, paymentNumber } = createPaymentDto
+        // TODO: Manage images
+        const payment = await this.paymentModel.create({
+          createdBy: userRequest.id,
+          client,
+          contract,
+          amount,
+          paymentNumber,
+          paymentDate,
+        });
+  
+        contractExist.paymentList.push(payment);
+  
+        let payments = 0
+        console.log("🚀 ~ file: payments.service.ts:57 ~ PaymentsService ~ create= ~ contractExist:", contractExist)
+        for(const payment of contractExist?.paymentList) {
+          console.log("🚀 ~ file: payments.service.ts:58 ~ PaymentsService ~ create= ~ payment:", payment)
+          payments = payments + payment.amount
+        }
+  
+        await contractExist.save();
+  
+        console.log("🚀 ~ file: payments.service.ts:63 ~ PaymentsService ~ create= ~ payments:", payments)
+        console.log("🚀 ~ file: payments.service.ts:64 ~ PaymentsService ~ create= ~ contractExist.totalAmount:", contractExist.totalAmount)
+        if(payments === contractExist.totalAmount) {
+          contractExist.status = false
+          await this.contractModel.updateOne({ _id: contract }, { status: false })
+        }
+  
+      }
+      return;
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

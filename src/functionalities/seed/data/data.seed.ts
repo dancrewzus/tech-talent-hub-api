@@ -38,23 +38,6 @@ export class SeedData {
       cpf: '123456789',
       password: 'ROOTimperial_23',
       role: 'root',
-    },
-    {
-      email: 'adumbledore@howarts.magic',
-      cpf: '123456780',
-      password: 'ADumbledore_1881',
-      role: 'collector',
-    },
-    {
-      email: 'hpotter@howarts.magic',
-      cpf: '123456781',
-      password: 'Nimbus_2000',
-      role: 'client',
-    },
-  ]
-
-  public getUsersData = () => [
-    {
       firstName: 'Root',
       secondName: '',
       paternalSurname: 'Superuser',
@@ -64,9 +47,12 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
-      user: null,
     },
     {
+      email: 'adumbledore@howarts.magic',
+      cpf: '123456780',
+      password: 'ADumbledore_1881',
+      role: 'collector',
       firstName: 'Albus',
       secondName: 'Percival',
       paternalSurname: 'Dumbledore',
@@ -76,9 +62,12 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
-      user: null,
     },
     {
+      email: 'hpotter@howarts.magic',
+      cpf: '123456781',
+      password: 'Nimbus_2000',
+      role: 'client',
       firstName: 'Harry',
       secondName: '',
       paternalSurname: 'Potter',
@@ -88,7 +77,6 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
-      user: null,
     },
   ]
   

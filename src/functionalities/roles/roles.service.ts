@@ -22,12 +22,11 @@ export class RolesService {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
 
-  private searchType = (search: String | number): String => {
-    let type: String = 'invalid'
+  private searchType = (search: string | number): string => {
     if(isValidObjectId(search)) return 'id'
     if(!isNaN(Number(search))) return 'number'
     if(isNaN(Number(search))) return 'name'
-    return type
+    return 'invalid'
   }
 
   public create = async (createRoleDto: CreateRoleDto) => {
@@ -43,19 +42,21 @@ export class RolesService {
   public findAll = async (paginationDto: PaginationDto) => {
     const { limit = this.defaultLimit, offset = 0 } = paginationDto;
     try {
-      return await this.roleModel.find()
+      return await this.roleModel.find({
+          name: { $nin: [ 'root', 'client' ]}
+        })
         .limit( limit )
         .skip( offset )
         .sort({
           cratedAt: 1
         })
-        .select('-__v')
+        .select('name')
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
   }
 
-  public findOne = async (search: String) => {
+  public findOne = async (search: string) => {
     let role: Role;
     const searchTypeResponse = this.searchType(search)
     try {
@@ -80,7 +81,7 @@ export class RolesService {
     return role;
   }
 
-  public update = async (search: String, updateRoleDto: UpdateRoleDto) => {
+  public update = async (search: string, updateRoleDto: UpdateRoleDto) => {
     const role = await this.findOne(search)
     if(updateRoleDto.name) updateRoleDto.name = updateRoleDto.name.toLocaleLowerCase()
     try {
@@ -91,7 +92,7 @@ export class RolesService {
     }
   }
 
-  public remove = async (id: String) => {
+  public remove = async (id: string) => {
     const { deletedCount } = await this.roleModel.deleteOne({ _id: id })
     if(deletedCount === 0)
       throw new NotFoundException(`Role with id "${ id }" not found.`)

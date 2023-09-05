@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { UserDataModule } from '../user-data/user-data.module';
 import { User, UserSchema } from './entities/user.entity';
 import { CommonModule } from '../../common/common.module';
 import { UsersController } from './users.controller';
@@ -18,7 +17,6 @@ import { UsersService } from './users.service';
     RolesModule,
     ConfigModule,
     CommonModule,
-    UserDataModule,
     MongooseModule.forFeature([
       {
         name: User.name,

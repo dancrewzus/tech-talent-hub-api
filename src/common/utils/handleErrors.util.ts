@@ -22,6 +22,7 @@ export class HandleErrors {
   }
   
   public handleExceptions = (error: any): never => {
+    console.log("🚀 ~ file: handleErrors.util.ts:25 ~ HandleErrors ~ error:", error)
     const code = error.code || error.status
 
     switch (code) {

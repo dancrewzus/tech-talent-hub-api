@@ -28,9 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       const { id } = payload
       const user = await this.userModel.findOne({ _id: id })
-        .select('email isActive role data')
         .populate({ path: 'role', select: 'name' })
-        .populate({ path: 'data', select: 'firstName secondName paternalSurname maternalSurname birthDate profilePicture' })
 
       if(!user) {
         throw new UnauthorizedException('Invalid token')
@@ -38,6 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if(!user.isActive) {
         throw new UnauthorizedException('User is inactive')
       }
+      
       return user
     } catch (error) {
       this.handleErrors.handleExceptions(error)

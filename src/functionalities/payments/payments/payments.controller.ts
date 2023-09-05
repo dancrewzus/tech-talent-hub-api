@@ -24,7 +24,7 @@ export class PaymentsController {
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   create(
-    @Body() createPaymentDto: CreatePaymentDto,
+    @Body() createPaymentDto: CreatePaymentDto[],
     @GetUser() user: User
   ) {
     return this.paymentsService.create(createPaymentDto, user);

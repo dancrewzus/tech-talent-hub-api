@@ -1,5 +1,7 @@
 const generateDBUri = (user: string, password: string, cluster: string): string => {
-  return `mongodb+srv://${ user }:${ password }@${ cluster }/?retryWrites=true&w=majority`;
+  const url = `mongodb+srv://${ user }:${ password }@${ cluster }/?retryWrites=true&w=majority`;
+  console.log("🚀 ~ file: env.config.ts:4 ~ generateDBUri ~ url:", url)
+  return url
 }
 
 export default () => ({

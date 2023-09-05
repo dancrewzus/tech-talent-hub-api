@@ -40,7 +40,7 @@ export class RolesController {
   @ApiResponse({ status: 200, description: 'Role found.', type: Role })
   @ApiResponse({ status: 404, description: 'Not found', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  findOne(@Param('search') search: String) {
+  findOne(@Param('search') search: string) {
     return this.rolesService.findOne(search);
   }
 
@@ -48,7 +48,7 @@ export class RolesController {
   @ApiResponse({ status: 200, description: 'Role updated.', type: Role })
   @ApiResponse({ status: 404, description: 'Not found', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  update(@Param('search') search: String, @Body() updateRoleDto: UpdateRoleDto) {
+  update(@Param('search') search: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.rolesService.update(search, updateRoleDto);
   }
 
@@ -56,7 +56,7 @@ export class RolesController {
   @ApiResponse({ status: 200, description: 'Role deleted.' })
   @ApiResponse({ status: 404, description: 'Not found', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  remove(@Param('id', ParseMongoIdPipe) id: String) {
+  remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.rolesService.remove(id);
   }
 }

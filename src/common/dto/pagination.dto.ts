@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsOptional, IsPositive, Min } from "class-validator";
+import { IsNumber, IsOptional, IsPositive, IsString, Min } from "class-validator";
 
 export class PaginationDto {
   
@@ -25,4 +25,14 @@ export class PaginationDto {
   @IsPositive()
   @IsNumber()
   public offset?: number;
+
+  @ApiProperty({
+    example: 'idepixel',
+    default: '',
+    description: 'Pagination filter',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  public filter?: string;
 }

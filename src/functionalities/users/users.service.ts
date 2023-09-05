@@ -2,11 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Model, isValidObjectId } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt'
 
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
-import { UserDataService } from '../user-data/user-data.service';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+// import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { RolesService } from '../roles/roles.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './entities/user.entity';
@@ -18,7 +17,6 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly userDataService: UserDataService,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
     private readonly roleService: RolesService,
@@ -27,7 +25,6 @@ export class UsersService {
   }
 
   private populateRole = { path: 'role', select: 'name' }
-  private populateUserData = { path: 'data' }
 
   private getUserPermissions = (roleName: string): string => {
     switch (roleName) {
@@ -55,16 +52,18 @@ export class UsersService {
       cpf: user.cpf,
       email: user.email,
       isLogged: user.isLogged,
-      fullname: `${ this.capitalizeFirstLetter(user.data?.firstName) } ${ this.capitalizeFirstLetter(user.data?.paternalSurname) }` || '',
-      firstName: this.capitalizeFirstLetter(user.data?.firstName) || '',
-      secondName: this.capitalizeFirstLetter(user.data?.secondName) || '',
-      paternalSurname: this.capitalizeFirstLetter(user.data?.paternalSurname) || '',
-      maternalSurname: this.capitalizeFirstLetter(user.data?.maternalSurname) || '',
-      birthDate: user.data?.birthDate || '',
-      profilePicture: user.data?.profilePicture || '',
-      residenceAddress: user.data?.residenceAddress || '',
-      billingAddress: user.data?.billingAddress || '',
-      phoneNumber: user.data?.phoneNumber || '',
+      fullname: `${ this.capitalizeFirstLetter(user.firstName) } ${ this.capitalizeFirstLetter(user.paternalSurname) }` || '',
+      firstName: this.capitalizeFirstLetter(user.firstName) || '',
+      secondName: this.capitalizeFirstLetter(user.secondName) || '',
+      paternalSurname: this.capitalizeFirstLetter(user.paternalSurname) || '',
+      maternalSurname: this.capitalizeFirstLetter(user.maternalSurname) || '',
+      birthDate: user.birthDate || '',
+      profilePicture: user.profilePicture || '',
+      residenceAddress: user.residenceAddress || '',
+      billingAddress: user.billingAddress || '',
+      phoneNumber: user.phoneNumber || '',
+      role: user.role?.name || '',
+      gender: user.gender || ''
     }
   }
 
@@ -76,7 +75,7 @@ export class UsersService {
   
   public create = async (createUserDto: CreateUserDto) => {
     try {
-      const { cpf, role, password, email, data } = createUserDto;
+      const { cpf, role, password, email, ...data } = createUserDto;
       const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
       if(!databaseRole) {
         throw new NotFoundException(`Role with id or name "${ role }" not found`)
@@ -86,12 +85,8 @@ export class UsersService {
         role: databaseRole.id, 
         email,
         cpf,
+        ...data
       });
-      if(data) {
-        const createdData = await this.userDataService.create({ ...data, user: user._id })
-        await this.userModel.updateOne({ _id: user._id }, { data: createdData._id });
-        user.data = createdData
-      }
       user.role = databaseRole
       return this.formatReturnData(user)
     } catch (error) {
@@ -99,38 +94,118 @@ export class UsersService {
     }
   }
 
-  public findUsers = async (paginationDto: PaginationDto) => {
-    const { limit = this.defaultLimit, offset = 0 } = paginationDto;
+  public findUsers = async (paginationDto: any, type: string) => {
+
+    const clientRole = await this.roleService.findOne('client' as string)
+    const rootRole = await this.roleService.findOne('root' as string)
+    if(!clientRole || !rootRole) {
+      throw new NotFoundException(`Role not found`)
+    }
+
+    const { limit, offset, filter } = paginationDto ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
+    const setOffset = offset === undefined ? 0 : offset
+    const setLimit = limit === undefined ? this.defaultLimit : limit
+    const isSearch = filter !== '' ? true : false
+
     try {
-      return await this.userModel.find()
-        .limit( limit )
-        .skip( offset )
-        .sort({
-          cratedAt: 1
-        })
+
+      let count = 0
+      let users: any[] = []
+      const notIn = { $nin: [ clientRole.id, rootRole.id ]}
+      let data: any = {
+        role: type === 'client' ? clientRole.id : notIn,
+      }
+
+      if(isSearch) {
+        data = {
+          $or: [
+            { 
+              cpf: new RegExp(filter, 'i'),
+              role: type === 'client' ? clientRole.id : notIn,
+            },
+            {
+              firstName: new RegExp(filter, 'i'),
+              role: type === 'client' ? clientRole.id : notIn,
+            },
+            {
+              paternalSurname: new RegExp(filter, 'i'),
+              role: type === 'client' ? clientRole.id : notIn,
+            },
+            {
+              phoneNumber: new RegExp(filter, 'i'),
+              role: type === 'client' ? clientRole.id : notIn,
+            },
+          ]
+        }
+      }
+
+      count = await this.userModel.count(data)
+      users = await this.userModel.find(data)
+        .skip( setOffset )
+        .limit( setLimit )
+        .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
-        .populate(this.populateUserData)
+
+      return {
+        data: users.map((client) => this.formatReturnData(client)),
+        count
+      }
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
   }
   
-  public findClients = async (/* paginationDto: PaginationDto */) => {
+  public findClients = async (paginationDto: any) => {
     const databaseRole = await this.roleService.findOne('client' as string)
     if(!databaseRole) {
       throw new NotFoundException(`Role with name "client" not found`)
     }
-    // const { limit = this.defaultLimit, offset = 0 } = paginationDto;
+    const { limit, offset, filter } = paginationDto ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
+    const setOffset = offset === undefined ? 0 : offset
+    const setLimit = limit === undefined ? this.defaultLimit : limit
+    const isSearch = filter !== '' ? true : false
     try {
-      const clients = await this.userModel.find({ role: databaseRole.id, isActive: true })
-        // .limit( limit )
-        // .skip( offset )
-        .sort({
-          cratedAt: 1
-        })
+
+      let count = 0
+      let clients: any[] = []
+        
+      let data: any = {
+        role: databaseRole.id, 
+        isActive: true
+      }
+      if(isSearch) {
+        data = {
+          $or: [
+            { 
+              title: new RegExp(filter, 'i'),
+              role: databaseRole.id, 
+              isActive: true
+            },
+            {
+              slug: new RegExp(filter, 'i'),
+              role: databaseRole.id, 
+              isActive: true
+            },
+            {
+              description: new RegExp(filter, 'i'),
+              role: databaseRole.id, 
+              isActive: true
+            },
+          ]
+        }
+      }
+      
+      count = await this.userModel.count(data)
+      clients = await this.userModel.find(data)
+        .skip( setOffset )
+        .limit( setLimit )
+        .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
-        .populate(this.populateUserData)
-      return clients.map((client) => this.formatReturnData(client))
+
+      return {
+        data: clients.map((user) => this.formatReturnData(user)),
+        count
+      }
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
@@ -145,12 +220,10 @@ export class UsersService {
           case 'id':
             user = await this.userModel.findById(search)
                     .populate(this.populateRole)
-                    .populate(this.populateUserData)
             break;
           case 'cpf':
             user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
                     .populate(this.populateRole)
-                    .populate(this.populateUserData)
             break;
           default:
             user = null;
@@ -171,7 +244,6 @@ export class UsersService {
   public update = async (search: string, updateUserDto: UpdateUserDto) => {
     const user = await this.findOne(search)
     try {
-      updateUserDto.cpf = updateUserDto.cpf.toLowerCase().trim();
       await user.updateOne(updateUserDto)
       return { ...user.toJSON(), ...updateUserDto }
     } catch (error) {

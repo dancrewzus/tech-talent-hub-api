@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { MainModule } from './main.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 const DEFAULT_PORT = 3000;
 
