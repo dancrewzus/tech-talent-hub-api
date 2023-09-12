@@ -4,7 +4,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import * as dayjs from 'dayjs'
 
 import { User } from '../../users/entities/user.entity';
-import { Payment } from 'src/functionalities/payments/payments/entities/payment.entity';
+import { Payment } from 'src/functionalities/payments/entities/payment.entity';
+import { Movement } from 'src/functionalities/movements/entities/movement.entity';
 
 @Schema()
 export class Contract extends Document {
@@ -60,6 +61,10 @@ export class Contract extends Document {
   @ApiProperty({ description: 'List of payments.', type: [String] })
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }], select: false })
   paymentList: Payment[];
+  
+  @ApiProperty({ description: 'List of movements.', type: [String] })
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Movement' }], select: false })
+  movementList: Movement[];
   
   @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
   @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })

@@ -1,5 +1,4 @@
-import { 
-  Logger,
+import {
   Injectable,
   InternalServerErrorException,
   BadRequestException,
@@ -22,7 +21,6 @@ export class HandleErrors {
   }
   
   public handleExceptions = (error: any): never => {
-    console.log("🚀 ~ file: handleErrors.util.ts:25 ~ HandleErrors ~ error:", error)
     const code = error.code || error.status
 
     switch (code) {
@@ -30,6 +28,7 @@ export class HandleErrors {
       case 23505: throw new BadRequestException(this.createMessage(error.message))
       case 401: throw new UnauthorizedException(this.createMessage(error.message))
       case 404: throw new NotFoundException(this.createMessage(error.message))
+      case 3000: throw new UnprocessableEntityException(error.message)
       default: throw new InternalServerErrorException(`An internal error has occurred: ${ error.message }`)
     }
   }

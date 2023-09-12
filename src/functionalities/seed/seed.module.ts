@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ConfigModule } from '@nestjs/config'
 
-import { Payment, PaymentSchema } from '../payments/payments/entities/payment.entity'
+import { Payment, PaymentSchema } from '../payments/entities/payment.entity'
 import { Contract, ContractSchema } from '../contracts/entities/contracts.entity'
 import { Role, RoleSchema } from '../roles/entities/role.entity'
 import { User, UserSchema } from '../users/entities/user.entity'
@@ -12,6 +12,7 @@ import { AuthModule } from 'src/auth/auth.module'
 import { SeedController } from './seed.controller'
 import { SeedService } from './seed.service'
 import { SeedData } from './data/data.seed'
+import { Movement, MovementSchema } from '../movements/entities/movement.entity'
 
 @Module({
   controllers: [ SeedController ],
@@ -36,6 +37,10 @@ import { SeedData } from './data/data.seed'
       {
         name: Payment.name,
         schema: PaymentSchema
+      },
+      {
+        name: Movement.name,
+        schema: MovementSchema
       },
     ])
   ],

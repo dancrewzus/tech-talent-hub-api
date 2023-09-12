@@ -1,25 +1,25 @@
 import { Module } from '@nestjs/common';
-import { PaymentsService } from './payments.service';
-import { PaymentsController } from './payments.controller';
+import { MovementsService } from './movements.service';
+import { MovementsController } from './movements.controller';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'src/auth/auth.module';
 import { CommonModule } from 'src/common/common.module';
 import { User, UserSchema } from 'src/functionalities/users/entities/user.entity';
-import { Payment, PaymentSchema } from './entities/payment.entity';
+import { Movement, MovementSchema } from './entities/movement.entity';
 import { Contract, ContractSchema } from 'src/functionalities/contracts/entities/contracts.entity';
 
 @Module({
-  controllers: [ PaymentsController ],
-  providers: [ PaymentsService ],
+  controllers: [ MovementsController ],
+  providers: [ MovementsService ],
   imports: [
     AuthModule,
     ConfigModule,
     CommonModule,
     MongooseModule.forFeature([
       {
-        name: Payment.name,
-        schema: PaymentSchema
+        name: Movement.name,
+        schema: MovementSchema
       },
       {
         name: User.name,
@@ -32,4 +32,4 @@ import { Contract, ContractSchema } from 'src/functionalities/contracts/entities
     ])
   ]
 })
-export class PaymentsModule {}
+export class MovementsModule {}

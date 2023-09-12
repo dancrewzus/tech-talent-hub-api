@@ -55,6 +55,7 @@ export class ContractsService {
       status: contract.status || false,
       lastContractDate: contract.lastContractDate || '',
       paymentList: contract.paymentList || [],
+      movementList: contract.movementList || [],
       createdAt: contract.createdAt || '',
       updatedAt: contract.updatedAt || '',
     }
@@ -83,6 +84,7 @@ export class ContractsService {
       residenceAddress: user.residenceAddress || '',
       billingAddress: user.billingAddress || '',
       phoneNumber: user.phoneNumber || '',
+      createdBy: user.createdBy ? this.formatReturnClientData(user.createdBy) : null,
     }
   }
 
@@ -215,12 +217,19 @@ export class ContractsService {
 
   public findLastContract = async (clientId: string) => {
     try {
+      const client = await this.userModel.findOne({ _id: clientId }).populate('createdBy')
+
+      if(!client) {
+        throw new BadRequestException(`Invalid client`)
+      }
+
       const contractsQuantity = await this.contractModel.count({ client: clientId })
       const allContractsByUser = await this.contractModel
         .find({ client: clientId })
         .sort({ createdAt: 'asc' })
         .populate('createdBy')
         .populate('paymentList')
+        .populate('movementList')
 
       const contractsByUser = allContractsByUser.filter((contract) => contract.status)
 
@@ -247,6 +256,7 @@ export class ContractsService {
 
       const contractCreatedDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss', true)
       const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss', true)
+      const movementList = lastContract.movementList || []
       const totalPayments = lastContract.payments || 0
       const daysOff = lastContract.nonWorkingDays || ''
       const amount = lastContract.paymentAmount || 0
@@ -269,8 +279,10 @@ export class ContractsService {
         const parsedDay = this.parseDay(day)
         const isSameContractDate = date.isSame(contractInitDate)
         const isBefore = date.isBefore(today)
+        const isToday = date.isSame(today, 'date')
         const isAhead = date.isAfter(today)
         const isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
+        const haveMovements = movementList.filter((mov) => mov.movementDate === date.format('DD/MM/YYYY'))
 
         // No es un día de pago
         if(!isPayDay) {
@@ -306,7 +318,7 @@ export class ContractsService {
           }
         } else {
           // Dias de atraso
-          if(isBefore && isPayDay) {
+          if((isBefore || isToday) && isPayDay) {
             color = this.ColorConstants.NOT_PAYED
             daysLate++
           }
@@ -317,6 +329,7 @@ export class ContractsService {
           backgroundColor: color,
           display: 'background',
           allDay: true,
+          title: haveMovements && haveMovements.length ? '*' : ''
         })
 
         index++
@@ -326,7 +339,7 @@ export class ContractsService {
 
       // Dias expirados
       if(contractEndDate.isBefore(today)) {
-        daysExpired = contractEndDate.diff(today, 'days')
+        daysExpired = today.diff(contractEndDate, 'days')
       }
 
       let paymentClientNumber = 0
@@ -354,6 +367,7 @@ export class ContractsService {
 
       return {
         data: {
+          createdBy: this.formatReturnClientData(client.createdBy) || null,
           haveActiveContracts: true,
           paymentIncompleteDays: paymentIncompleteDays[0] || [],
           paymentAheadDays: paymentAheadDays || [],

@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
+import { Movement } from '../movements/entities/movement.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment } from './entities/payment.entity';
@@ -18,6 +19,7 @@ export class PaymentsService {
 
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
+    @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
@@ -29,6 +31,15 @@ export class PaymentsService {
   public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
     try {
 
+      const haveFinal = await this.movementModel.findOne({ type: 'final' })
+
+      if(haveFinal) {
+        throw {
+          code: 3000,
+          message: 'Não é mais possível cadastrar mais movimentos, verifique amanhã',
+        }
+      }
+      
       const { client, contract } = createPaymentsDto[0]
 
       const clientId = new BSON.ObjectId( client )
@@ -36,6 +47,7 @@ export class PaymentsService {
         .findOne({ _id: contract })
         .populate('client')
         .populate('paymentList')
+        .populate('movementList')
 
       if(!contractExist) {
         throw new BadRequestException(`Invalid contract`)
@@ -44,6 +56,8 @@ export class PaymentsService {
       if(!contractExist.client._id.equals(clientId)) {
         throw new BadRequestException(`Invalid client`)
       }
+
+      let totalAmount = 0
 
       for (let index = 0; index < createPaymentsDto.length; index++) {
         const createPaymentDto = createPaymentsDto[index];
@@ -61,22 +75,30 @@ export class PaymentsService {
         contractExist.paymentList.push(payment);
   
         let payments = 0
-        console.log("🚀 ~ file: payments.service.ts:57 ~ PaymentsService ~ create= ~ contractExist:", contractExist)
         for(const payment of contractExist?.paymentList) {
-          console.log("🚀 ~ file: payments.service.ts:58 ~ PaymentsService ~ create= ~ payment:", payment)
           payments = payments + payment.amount
         }
-  
-        await contractExist.save();
-  
-        console.log("🚀 ~ file: payments.service.ts:63 ~ PaymentsService ~ create= ~ payments:", payments)
-        console.log("🚀 ~ file: payments.service.ts:64 ~ PaymentsService ~ create= ~ contractExist.totalAmount:", contractExist.totalAmount)
+
         if(payments === contractExist.totalAmount) {
           contractExist.status = false
-          await this.contractModel.updateOne({ _id: contract }, { status: false })
         }
-  
+
+        await contractExist.save();
+        totalAmount += Number.parseInt(`${ amount }`)
       }
+
+      // MOVEMENT CREATE
+      const movement = await this.movementModel.create({
+        createdBy: userRequest.id,
+        contract,
+        amount: totalAmount,
+        type: 'in',
+        description: 'Pagamento relacionado ao contrato'
+      })
+
+      contractExist.movementList.push(movement);
+      await contractExist.save();
+
       return;
     } catch (error) {
       this.handleErrors.handleExceptions(error)

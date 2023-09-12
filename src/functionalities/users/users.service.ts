@@ -63,7 +63,8 @@ export class UsersService {
       billingAddress: user.billingAddress || '',
       phoneNumber: user.phoneNumber || '',
       role: user.role?.name || '',
-      gender: user.gender || ''
+      gender: user.gender || '',
+      createdBy: user.createdBy ? this.formatReturnData(user.createdBy) : null,
     }
   }
 
@@ -73,7 +74,7 @@ export class UsersService {
     return 'invalid'
   }
   
-  public create = async (createUserDto: CreateUserDto) => {
+  public create = async (createUserDto: CreateUserDto, userRequest: User) => {
     try {
       const { cpf, role, password, email, ...data } = createUserDto;
       const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
@@ -82,6 +83,7 @@ export class UsersService {
       }
       const user = await this.userModel.create({
         password: bcrypt.hashSync(`${ password ? password : cpf }`, 10),
+        createdBy: userRequest.id,
         role: databaseRole.id, 
         email,
         cpf,
@@ -90,7 +92,21 @@ export class UsersService {
       user.role = databaseRole
       return this.formatReturnData(user)
     } catch (error) {
-      this.handleErrors.handleExceptions(error)
+      const code = error.code || error.status
+      if(code === 11000) {
+        const key = Object.keys(error.keyPattern)[0];
+        const value = error.keyValue[key];
+        const user = await this.userModel.findOne({ cpf: value })
+                    .populate(this.populateRole)
+                    .populate('createdBy')
+        return {
+          status: 422,
+          ok: false,
+          data: { user: this.formatReturnData(user) }
+        }
+      } else {
+        this.handleErrors.handleExceptions(error)
+      }
     }
   }
 
@@ -145,6 +161,7 @@ export class UsersService {
         .limit( setLimit )
         .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
+        .populate('createdBy')
 
       return {
         data: users.map((client) => this.formatReturnData(client)),
@@ -155,7 +172,7 @@ export class UsersService {
     }
   }
   
-  public findClients = async (paginationDto: any) => {
+  public findClients = async (paginationDto: any, userRequest: User) => {
     const databaseRole = await this.roleService.findOne('client' as string)
     if(!databaseRole) {
       throw new NotFoundException(`Role with name "client" not found`)
@@ -164,13 +181,15 @@ export class UsersService {
     const setOffset = offset === undefined ? 0 : offset
     const setLimit = limit === undefined ? this.defaultLimit : limit
     const isSearch = filter !== '' ? true : false
+    const isAdmin = ['root', 'admin'].includes(userRequest?.role?.name)
     try {
 
       let count = 0
       let clients: any[] = []
         
       let data: any = {
-        role: databaseRole.id, 
+        role: databaseRole.id,
+        createdBy: isAdmin ? { $exists: true } : userRequest.id,
         isActive: true
       }
       if(isSearch) {
@@ -178,17 +197,20 @@ export class UsersService {
           $or: [
             { 
               title: new RegExp(filter, 'i'),
-              role: databaseRole.id, 
+              role: databaseRole.id,
+              createdBy: isAdmin ? { $exists: true } : userRequest.id,
               isActive: true
             },
             {
               slug: new RegExp(filter, 'i'),
-              role: databaseRole.id, 
+              role: databaseRole.id,
+              createdBy: isAdmin ? { $exists: true } : userRequest.id,
               isActive: true
             },
             {
               description: new RegExp(filter, 'i'),
-              role: databaseRole.id, 
+              role: databaseRole.id,
+              createdBy: isAdmin ? { $exists: true } : userRequest.id,
               isActive: true
             },
           ]
@@ -201,6 +223,7 @@ export class UsersService {
         .limit( setLimit )
         .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
+        .populate('createdBy')
 
       return {
         data: clients.map((user) => this.formatReturnData(user)),
@@ -220,10 +243,12 @@ export class UsersService {
           case 'id':
             user = await this.userModel.findById(search)
                     .populate(this.populateRole)
+                    .populate('createdBy')
             break;
           case 'cpf':
             user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
                     .populate(this.populateRole)
+                    .populate('createdBy')
             break;
           default:
             user = null;

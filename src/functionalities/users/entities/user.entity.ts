@@ -70,6 +70,10 @@ export class User extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Role', required: true })
   role: Role;
 
+  @ApiProperty({ type: String, description: 'User creator ID', example: '6472d32b20f00d485b965c1e' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
+  createdBy: User;
+
   @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
   createdAt?: string;
   

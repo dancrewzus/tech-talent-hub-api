@@ -8,7 +8,8 @@ import { HandleErrors } from 'src/common/utils/handleErrors.util'
 import { User } from '../users/entities/user.entity';
 import { SeedData } from './data/data.seed'
 import { Contract } from '../contracts/entities/contracts.entity'
-import { Payment } from '../payments/payments/entities/payment.entity'
+import { Payment } from '../payments/entities/payment.entity'
+import { Movement } from '../movements/entities/movement.entity'
 
 @Injectable()
 export class SeedService {
@@ -17,6 +18,7 @@ export class SeedService {
 
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
+    @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(Role.name) private readonly roleModel: Model<Role>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
@@ -29,6 +31,7 @@ export class SeedService {
   private seedAuthenticationData = async () => {
     // CLEAR contracts and payments
     await this.contractModel.deleteMany()
+    await this.movementModel.deleteMany()
     await this.paymentModel.deleteMany()
     // ROLES Seed
     await this.roleModel.deleteMany()
@@ -41,15 +44,26 @@ export class SeedService {
     const primaryRole = createdRoles.find((role) => role.primary)
     const usersBeforeInsert = this.seedData.getUsers()
     const usersToInsert = []
-    usersBeforeInsert.forEach((user) => {
+    let superUser;
+    for (let index = 0; index < usersBeforeInsert.length; index++) {
+      const user = usersBeforeInsert[index];
       const { password, role, ...data } = user
       const role_ = createdRoles.find((el) => el.name === role)
-      usersToInsert.push({
-        password: bcrypt.hashSync(`${ password }`, 10),
-        role: role_ ? role_.id : primaryRole.id,
-        ...data,
-      })
-    })
+      if(index === 0) {
+        superUser = await this.userModel.create({
+          password: bcrypt.hashSync(`${ password }`, 10),
+          role: role_ ? role_.id : primaryRole.id,
+          ...data,
+        })
+      } else {
+        usersToInsert.push({
+          password: bcrypt.hashSync(`${ password }`, 10),
+          role: role_ ? role_.id : primaryRole.id,
+          createdBy: superUser ? superUser.id : null,
+          ...data,
+        })
+      }
+    }
     await this.userModel.insertMany(usersToInsert)
     this.logger.log('Users seeded')
   }
