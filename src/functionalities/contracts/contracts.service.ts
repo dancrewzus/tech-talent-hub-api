@@ -11,6 +11,7 @@ import { User } from '../users/entities/user.entity'
 
 import * as customParseFormat from 'dayjs/plugin/customParseFormat'
 import * as dayjs from 'dayjs'
+import { Movement } from '../movements/entities/movement.entity'
 dayjs.extend(customParseFormat)
 
 @Injectable()
@@ -102,6 +103,7 @@ export class ContractsService {
   }
 
   constructor(
+    @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
@@ -112,6 +114,16 @@ export class ContractsService {
 
   public create = async (createContractDto: CreateContractDto, userRequest: User) => {
     try {
+
+      const haveFinal = await this.movementModel.findOne({ type: 'final' })
+
+      if(haveFinal) {
+        throw {
+          code: 3000,
+          message: 'Não é mais possível cadastrar mais movimentos, verifique amanhã',
+        }
+      }
+      
       const { client, ...contractData } = createContractDto
       const clientExist = await this.userModel.findOne({ _id: client })
       if(!clientExist) {
@@ -122,6 +134,13 @@ export class ContractsService {
         client: clientExist.id,
         ...contractData,
       });
+
+      await this.movementModel.create({
+        createdBy: userRequest.id,
+        amount: contract.loanAmount,
+        type: 'out',
+        description: 'Novo contrato',
+      })
       return contract;
     } catch (error) {
       this.handleErrors.handleExceptions(error)
