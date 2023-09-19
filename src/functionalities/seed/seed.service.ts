@@ -10,6 +10,7 @@ import { SeedData } from './data/data.seed'
 import { Contract } from '../contracts/entities/contracts.entity'
 import { Payment } from '../payments/entities/payment.entity'
 import { Movement } from '../movements/entities/movement.entity'
+import { Image } from '../images/entities/image.entity'
 
 @Injectable()
 export class SeedService {
@@ -20,6 +21,7 @@ export class SeedService {
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
+    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(Role.name) private readonly roleModel: Model<Role>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
@@ -30,6 +32,7 @@ export class SeedService {
 
   private seedAuthenticationData = async () => {
     // CLEAR contracts and payments
+    await this.imageModel.deleteMany()
     await this.contractModel.deleteMany()
     await this.movementModel.deleteMany()
     await this.paymentModel.deleteMany()

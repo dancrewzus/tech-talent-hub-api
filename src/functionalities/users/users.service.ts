@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt'
 
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 // import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Image } from '../images/entities/image.entity';
 import { RolesService } from '../roles/roles.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './entities/user.entity';
@@ -16,6 +17,7 @@ export class UsersService {
   private defaultLimit: number;
 
   constructor(
+    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
@@ -58,7 +60,8 @@ export class UsersService {
       paternalSurname: this.capitalizeFirstLetter(user.paternalSurname) || '',
       maternalSurname: this.capitalizeFirstLetter(user.maternalSurname) || '',
       birthDate: user.birthDate || '',
-      profilePicture: user.profilePicture || '',
+      profilePicture: user.profilePicture?.imageUrl || '',
+      addressPicture: user.addressPicture?.imageUrl || '',
       residenceAddress: user.residenceAddress || '',
       billingAddress: user.billingAddress || '',
       phoneNumber: user.phoneNumber || '',
@@ -76,21 +79,45 @@ export class UsersService {
   
   public create = async (createUserDto: CreateUserDto, userRequest: User) => {
     try {
-      const { cpf, role, password, email, ...data } = createUserDto;
+      const { cpf, role, password, email, profilePicture, addressPicture, ...data } = createUserDto;
       const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
       if(!databaseRole) {
         throw new NotFoundException(`Role with id or name "${ role }" not found`)
       }
+
+      let databaseProfilePicture = null
+      if(profilePicture !== '') {
+        databaseProfilePicture = await this.imageModel.findOne({ _id : profilePicture })
+        if(!databaseProfilePicture) {
+          throw new NotFoundException(`Image with id "${ profilePicture }" not found`)
+        }
+      }
+
+      let databaseAddressPicture = null
+      if(addressPicture !== '') {
+        databaseAddressPicture = await this.imageModel.findOne({ _id : addressPicture })
+        if(!databaseAddressPicture) {
+          throw new NotFoundException(`Image with id "${ addressPicture }" not found`)
+        }
+      }
+
       const user = await this.userModel.create({
         password: bcrypt.hashSync(`${ password ? password : cpf }`, 10),
         createdBy: userRequest.id,
-        role: databaseRole.id, 
+        role: databaseRole.id,
+        profilePicture: databaseProfilePicture?.id || null,
+        addressPicture: databaseAddressPicture?.id || null,
         email,
         cpf,
         ...data
       });
+
       user.role = databaseRole
+      user.profilePicture = databaseProfilePicture
+      user.addressPicture = databaseAddressPicture
+
       return this.formatReturnData(user)
+
     } catch (error) {
       const code = error.code || error.status
       if(code === 11000) {
@@ -162,6 +189,8 @@ export class UsersService {
         .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
         .populate('createdBy')
+        .populate('profilePicture')
+        .populate('addressPicture')
 
       return {
         data: users.map((client) => this.formatReturnData(client)),
@@ -224,6 +253,8 @@ export class UsersService {
         .sort({ cratedAt: 'asc' })
         .populate(this.populateRole)
         .populate('createdBy')
+        .populate('profilePicture')
+        .populate('addressPicture')
 
       return {
         data: clients.map((user) => this.formatReturnData(user)),
@@ -244,11 +275,15 @@ export class UsersService {
             user = await this.userModel.findById(search)
                     .populate(this.populateRole)
                     .populate('createdBy')
+                    .populate('profilePicture')
+                    .populate('addressPicture')
             break;
           case 'cpf':
             user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
                     .populate(this.populateRole)
                     .populate('createdBy')
+                    .populate('profilePicture')
+                    .populate('addressPicture')
             break;
           default:
             user = null;

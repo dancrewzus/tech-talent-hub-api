@@ -13,6 +13,7 @@ import { SeedController } from './seed.controller'
 import { SeedService } from './seed.service'
 import { SeedData } from './data/data.seed'
 import { Movement, MovementSchema } from '../movements/entities/movement.entity'
+import { Image, ImageSchema } from '../images/entities/image.entity'
 
 @Module({
   controllers: [ SeedController ],
@@ -41,6 +42,10 @@ import { Movement, MovementSchema } from '../movements/entities/movement.entity'
       {
         name: Movement.name,
         schema: MovementSchema
+      },
+      {
+        name: Image.name,
+        schema: ImageSchema
       },
     ])
   ],

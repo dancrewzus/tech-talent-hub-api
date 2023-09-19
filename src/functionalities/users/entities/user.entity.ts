@@ -3,6 +3,7 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import * as dayjs from 'dayjs'
 
+import { Image } from 'src/functionalities/images/entities/image.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
 
 @Schema()
@@ -52,9 +53,6 @@ export class User extends Document {
 
   @Prop({ type: String, required: false, default: '01/01/1900' })
   birthDate: string;
-
-  @Prop({ type: String, required: false, default: '' })
-  profilePicture: string;
   
   @Prop({ type: String, required: true })
   residenceAddress: string;
@@ -64,6 +62,12 @@ export class User extends Document {
   
   @Prop({ type: String, required: true })
   phoneNumber: string;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
+  profilePicture: Image;
+  
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
+  addressPicture: Image;
 
   // END USER DATA
 

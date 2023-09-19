@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -9,8 +9,13 @@ import { HandleErrors } from 'src/common/utils/handleErrors.util';
 import { Movement } from '../movements/entities/movement.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { Image } from '../images/entities/image.entity';
 import { Payment } from './entities/payment.entity';
 import { BSON } from 'mongodb';
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as dayjs from 'dayjs'
+dayjs.extend(customParseFormat)
 
 @Injectable()
 export class PaymentsService {
@@ -21,6 +26,7 @@ export class PaymentsService {
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
+    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
@@ -31,7 +37,7 @@ export class PaymentsService {
   public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final' })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: dayjs().format('DD/MM/YYYY') })
 
       if(haveFinal) {
         throw {
@@ -40,7 +46,7 @@ export class PaymentsService {
         }
       }
       
-      const { client, contract } = createPaymentsDto[0]
+      const { client, contract, paymentPicture } = createPaymentsDto[0]
 
       const clientId = new BSON.ObjectId( client )
       const contractExist = await this.contractModel
@@ -57,12 +63,19 @@ export class PaymentsService {
         throw new BadRequestException(`Invalid client`)
       }
 
+      let databasePaymentPicture = null
+      if(paymentPicture !== '') {
+        databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
+        if(!databasePaymentPicture) {
+          throw new NotFoundException(`Image with id "${ paymentPicture }" not found`)
+        }
+      }
+
       let totalAmount = 0
 
       for (let index = 0; index < createPaymentsDto.length; index++) {
         const createPaymentDto = createPaymentsDto[index];
         const { client, contract, amount, paymentDate, paymentNumber } = createPaymentDto
-        // TODO: Manage images
         const payment = await this.paymentModel.create({
           createdBy: userRequest.id,
           client,
@@ -70,6 +83,7 @@ export class PaymentsService {
           amount,
           paymentNumber,
           paymentDate,
+          paymentPicture: databasePaymentPicture?.id || null,
         });
   
         contractExist.paymentList.push(payment);
@@ -93,7 +107,8 @@ export class PaymentsService {
         contract,
         amount: totalAmount,
         type: 'in',
-        description: 'Pagamento relacionado ao contrato'
+        description: 'Pagamento relacionado ao contrato',
+        paymentPicture: databasePaymentPicture?.id || null,
       })
 
       contractExist.movementList.push(movement);

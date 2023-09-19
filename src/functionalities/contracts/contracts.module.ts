@@ -2,14 +2,14 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
 
+import { Movement, MovementSchema } from '../movements/entities/movement.entity'
 import { Contract, ContractSchema } from './entities/contracts.entity'
+import { Image, ImageSchema } from '../images/entities/image.entity'
 import { User, UserSchema } from '../users/entities/user.entity'
-import { CommonModule } from 'src/common/common.module'
-
 import { ContractsController } from './contracts.controller'
+import { CommonModule } from 'src/common/common.module'
 import { ContractsService } from './contracts.service'
 import { AuthModule } from 'src/auth/auth.module'
-import { Movement, MovementSchema } from '../movements/entities/movement.entity'
 
 @Module({
   controllers: [ ContractsController ],
@@ -30,6 +30,10 @@ import { Movement, MovementSchema } from '../movements/entities/movement.entity'
       {
         name: User.name,
         schema: UserSchema
+      },
+      {
+        name: Image.name,
+        schema: ImageSchema
       },
     ])
   ]

@@ -11,10 +11,10 @@ export class CreatePaymentDto {
   @IsString()
   contract: string
   
-  @ApiProperty({ type: String, description: 'Image URL', example: 'http://...' })
-  @IsOptional()
+  @ApiProperty({ type: String, description: 'Image ID', example: '654564sd' })
   @IsString()
-  imageUrl: string
+  @IsOptional()
+  paymentPicture: string
   
   @ApiProperty({ type: String, description: 'Payment date. Format DD/MM/YYYY', example: '05/08/2023' })
   @IsString()

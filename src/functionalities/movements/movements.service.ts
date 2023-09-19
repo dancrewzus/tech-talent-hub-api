@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -9,6 +9,7 @@ import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 import { CreateMovementDto } from './dto/create-movement.dto';
 import { UpdateMovementDto } from './dto/update-movement.dto';
+import { Image } from '../images/entities/image.entity';
 import { Movement } from './entities/movement.entity';
 
 @Injectable()
@@ -16,9 +17,25 @@ export class MovementsService {
 
   private defaultLimit: number;
 
+  private formatReturnMovementData = (movement: Movement) => {
+    return {
+      id: movement.id,
+      createdBy: movement.createdBy || null,
+      contract: movement.contract || null,
+      amount: movement.amount || 0,
+      paymentPicture: movement.paymentPicture?.imageUrl || null,
+      type: movement.type || '',
+      description: movement.description || '',
+      movementDate: movement.movementDate || '',
+      createdAt: movement.createdAt || '',
+      updatedAt: movement.updatedAt || '',
+    }
+  }
+
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
+    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
@@ -29,7 +46,7 @@ export class MovementsService {
   public create = async (createMovementsDto: CreateMovementDto, userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final' })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: dayjs().format('DD/MM/YYYY') })
 
       if(haveFinal) {
         throw {
@@ -43,7 +60,16 @@ export class MovementsService {
         type,
         description,
         movementDate,
+        paymentPicture,
       } = createMovementsDto
+
+      let databasePaymentPicture = null
+      if(paymentPicture !== '') {
+        databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
+        if(!databasePaymentPicture) {
+          throw new NotFoundException(`Image with id "${ paymentPicture }" not found`)
+        }
+      }
 
       await this.movementModel.create({
         createdBy: userRequest.id,
@@ -51,6 +77,7 @@ export class MovementsService {
         type,
         description,
         movementDate,
+        paymentPicture: databasePaymentPicture?.id || null,
       });
 
       return;
@@ -65,7 +92,7 @@ export class MovementsService {
       const yesterday = dayjs().subtract(1, 'day').format('DD/MM/YYYY')
 
       const movementsFromYesterday = await this.movementModel.find({ movementDate: yesterday })
-      const movementsFromToday = await this.movementModel.find({ movementDate: today }).sort({ createdAt: 'asc' })
+      const movementsFromToday = await this.movementModel.find({ movementDate: today }).sort({ createdAt: 'asc' }).populate('paymentPicture')
 
       let haveFinalMovement = false
       let calculatedYesterdayAmount = 0
@@ -134,7 +161,7 @@ export class MovementsService {
       return {
         yesterdayAmount,
         todayAmount,
-        movementsFromToday: movementsFromToday.filter((mov) => mov.type !== 'final'),
+        movementsFromToday: movementsFromToday.filter((mov) => mov.type !== 'final').map((e) => this.formatReturnMovementData(e)),
         closed: haveFinalMovement
       }
 

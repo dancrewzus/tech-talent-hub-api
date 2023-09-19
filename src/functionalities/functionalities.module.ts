@@ -6,6 +6,7 @@ import { SeedModule } from './seed/seed.module'
 import { ContractsModule } from './contracts/contracts.module'
 import { PaymentsModule } from './payments/payments.module';
 import { MovementsModule } from './movements/movements.module';
+import { ImagesModule } from './images/images.module'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { MovementsModule } from './movements/movements.module';
     SeedModule,
     PaymentsModule,
     MovementsModule,
+    ImagesModule,
   ],
   exports: [ ],
 })

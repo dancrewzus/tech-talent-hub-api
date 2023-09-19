@@ -9,10 +9,10 @@ export class CreateMovementDto {
   @Min(1)
   amount: number
   
-  @ApiProperty({ type: String, description: 'Image URL', example: 'http://...' })
-  @IsOptional()
+  @ApiProperty({ type: String, description: 'Image ID', example: '654564sd' })
   @IsString()
-  imageUrl: string
+  @IsOptional()
+  paymentPicture: string
   
   @ApiProperty({ type: String, description: 'Movement type', example: 'in' })
   @IsEnum({

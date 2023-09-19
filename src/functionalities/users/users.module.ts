@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { Image, ImageSchema } from '../images/entities/image.entity';
 import { User, UserSchema } from './entities/user.entity';
 import { CommonModule } from '../../common/common.module';
 import { UsersController } from './users.controller';
@@ -21,6 +22,10 @@ import { UsersService } from './users.service';
       {
         name: User.name,
         schema: UserSchema
+      },
+      {
+        name: Image.name,
+        schema: ImageSchema
       },
     ])
   ], 
