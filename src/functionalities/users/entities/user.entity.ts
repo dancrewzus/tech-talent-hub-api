@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import * as dayjs from 'dayjs'
 
+import { TimeHandler } from 'src/common/utils/timeHandler.util';
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
 
@@ -78,10 +78,10 @@ export class User extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   createdBy: User;
 
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
+  @Prop({ type: String, default: TimeHandler.getNow() })
   createdAt?: string;
   
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
+  @Prop({ type: String, default: TimeHandler.getNow() })
   updatedAt?: string;
 }
 

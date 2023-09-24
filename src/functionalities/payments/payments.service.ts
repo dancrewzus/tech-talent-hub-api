@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { TimeHandler } from 'src/common/utils/timeHandler.util';
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
@@ -12,10 +13,6 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Image } from '../images/entities/image.entity';
 import { Payment } from './entities/payment.entity';
 import { BSON } from 'mongodb';
-
-import * as customParseFormat from 'dayjs/plugin/customParseFormat'
-import * as dayjs from 'dayjs'
-dayjs.extend(customParseFormat)
 
 @Injectable()
 export class PaymentsService {
@@ -28,6 +25,7 @@ export class PaymentsService {
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -37,7 +35,7 @@ export class PaymentsService {
   public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: dayjs().format('DD/MM/YYYY') })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getTimeEntity() })
 
       if(haveFinal) {
         throw {

@@ -72,8 +72,9 @@ export class UsersService {
   }
 
   private searchType = (search: string | number): string => {
+    console.log("🚀 ~ file: users.service.ts:75 ~ UsersService ~ search:", search)
     if(isValidObjectId(search)) return 'id'
-    if(isNaN(Number(search))) return 'cpf'
+    if(!isNaN(Number(search))) return 'cpf'
     return 'invalid'
   }
   
@@ -295,7 +296,7 @@ export class UsersService {
       if(!user) {
         throw new NotFoundException(`User with ${ searchTypeResponse } "${ search }" not found`)
       }
-      return user
+      return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

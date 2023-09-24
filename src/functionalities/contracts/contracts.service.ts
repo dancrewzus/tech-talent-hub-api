@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 
+import { TimeHandler } from 'src/common/utils/timeHandler.util';
 import { HandleErrors } from '../../common/utils/handleErrors.util'
 import { Movement } from '../movements/entities/movement.entity'
 import { CreateContractDto } from './dto/create-contract.dto'
@@ -11,10 +12,6 @@ import { Payment } from '../payments/entities/payment.entity'
 import { Image } from '../images/entities/image.entity'
 import { Contract } from './entities/contracts.entity'
 import { User } from '../users/entities/user.entity'
-
-import * as customParseFormat from 'dayjs/plugin/customParseFormat'
-import * as dayjs from 'dayjs'
-dayjs.extend(customParseFormat)
 
 @Injectable()
 export class ContractsService {
@@ -95,13 +92,26 @@ export class ContractsService {
     return mapped
   }
 
-  private formatReturnClientData = (user: User) => {
+  private formatReturnClientData = (user: User, daysLate = 0, daysIncomplete = 0) => {
     if(!user.isActive) return
     const permission: string = user.role 
       ? this.getUserPermissions(user.role.name) 
       : ''
 
+    let icon = '' 
+    let color = '' 
+    
+    if(daysLate > 0) {
+      icon = 'x-circle'
+      color = 'red'
+    } else if(daysIncomplete > 0) { 
+      icon = 'alert-triangle'
+      color = 'orange'
+    }
+
     return {
+      icon,
+      color,
       permission,
       id: user.id,
       cpf: user.cpf,
@@ -140,6 +150,7 @@ export class ContractsService {
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -149,7 +160,7 @@ export class ContractsService {
   public create = async (createContractDto: CreateContractDto, userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: dayjs().format('DD/MM/YYYY') })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getNow('simple') })
 
       if(haveFinal) {
         throw {
@@ -201,29 +212,39 @@ export class ContractsService {
         .populate({ path: 'client' })
         .populate({ path: 'paymentList' })
 
-      const today = dayjs()
-      const clients: any = []
+      const today = this.timeHandler.getTimeEntity()
+      const pendingArray: any = []
+
+      // Nombre/ monto del contrato/ lo que le falta/valor parcela/ parcela  atrasado/parcela  pagas/parcelas faltantes
 
       for (let index = 0; index < contracts.length; index++) {
 
         const contract = contracts[index];
 
         const { paymentList, client, payments, createdAt, nonWorkingDays, paymentAmount } = contract
-        const contractInitDate = dayjs(createdAt, 'DD/MM/YYYY HH:mm:ss', true)
+        const contractInitDate = this.timeHandler.formatDate({ date: createdAt, format: 'full'})
         const havePayments = paymentList.length ? true : false
         const paymentDays: any[] = [];
   
         let daysLate = 0
+        let daysPayed = 0
         let daysIncomplete = 0
-        
         let indexPayments = 0
+        let payed = 0
+
+        if(havePayments) {
+          paymentList.forEach((payment) => {
+            payed += payment.amount
+          });
+        }
+        
         while (paymentDays.length < payments) {
           
           const date = contractInitDate.add(indexPayments, 'day')
           const day = date.day()
           const parsedDay = this.parseDay(day)
           const isSameContractDate = date.isSame(contractInitDate)
-          const isBefore = date.isBefore(today)
+          const isBefore = date.isBefore(today, 'date')
           const isToday = date.isSame(today, 'date')
           const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
   
@@ -231,7 +252,7 @@ export class ContractsService {
           if(isPayDay) {
             
             paymentDays.push(date)
-  
+            
             if(isBefore || isToday) {
               // Se han realizado pagos
               const exist = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : null
@@ -242,6 +263,8 @@ export class ContractsService {
                 });
                 if(sum < paymentAmount) {
                   daysIncomplete++
+                } else {
+                  daysPayed++
                 }
               } else {
                 // Dias de atraso
@@ -253,15 +276,24 @@ export class ContractsService {
         }
   
         if(daysLate > 0 || daysIncomplete > 0) {
-          const clientData = await (await this.userModel.findOne({ _id: client }).populate('profilePicture')).populate('addressPicture')
-          clients.push(this.formatReturnClientData(clientData))
+          const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
+          pendingArray.push({
+            client: this.formatReturnClientData(clientData, daysLate, daysIncomplete),
+            contractData: {
+              amount: contract.totalAmount, // Monto del contrato
+              pending: (contract.totalAmount - payed), // Lo que le falta
+              payment: paymentAmount, // Valor de la parcela
+              late: daysLate, // Parcelas atrasadas
+              upToDate: daysPayed, // Parcelas al día
+              incomplete: daysIncomplete, // Parcelas restantes
+              remaining: payments - daysPayed, // Parcelas restantes
+            }
+          })
         }
       }
       
       return {
-        data: {
-          clients
-        }
+        data: pendingArray
       }
       
     } catch (error) {
@@ -295,13 +327,13 @@ export class ContractsService {
             haveActiveContracts: false,
             patchValue: {
               countContracts  : contractsQuantity,
-              lastContractDate: dayjs(allContractsByUser[0]?.createdAt || null, 'DD/MM/YYYY HH:mm:ss', true).format('DD/MM/YYYY')
+              lastContractDate: this.timeHandler.formatDateString({ date: allContractsByUser[0]?.createdAt || null, format: 'full' })
             }
           }
         }
       }
 
-      const today = dayjs()
+      const today = this.timeHandler.getTimeEntity()
       const lastContract = contractsByUser[0];
       const movementList = [] 
       const paymentList = []
@@ -329,8 +361,8 @@ export class ContractsService {
       let paidAmount = 0
       let payments = 0
 
-      const contractCreatedDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss', true)
-      const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss', true)
+      const contractCreatedDate = this.timeHandler.formatDate({ date: lastContract.createdAt, format: 'full' })
+      const contractInitDate = this.timeHandler.formatDate({ date: lastContract.createdAt, format: 'full' })
       const totalPayments = lastContract.payments || 0
       const daysOff = lastContract.nonWorkingDays || ''
       const amount = lastContract.paymentAmount || 0

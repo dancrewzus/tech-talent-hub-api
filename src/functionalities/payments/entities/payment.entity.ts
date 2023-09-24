@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import * as dayjs from 'dayjs'
 
+import { TimeHandler } from 'src/common/utils/timeHandler.util';
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
@@ -33,16 +33,16 @@ export class Payment extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
   paymentPicture: Image;
   
-  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Payment date.' })
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
+  @ApiProperty({ example: TimeHandler.getNow(), description: 'Payment date.' })
+  @Prop({ type: String, default: TimeHandler.getNow() })
   paymentDate: string;
   
-  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
+  @ApiProperty({ example: TimeHandler.getNow(), description: 'Creation date.' })
+  @Prop({ type: String, default: TimeHandler.getNow() })
   createdAt?: string;
   
-  @ApiProperty({ example: dayjs().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
-  @Prop({ type: String, default: dayjs().format('DD/MM/YYYY HH:mm:ss') })
+  @ApiProperty({ example: TimeHandler.getNow(), description: 'Updated date.' })
+  @Prop({ type: String, default: TimeHandler.getNow() })
   updatedAt?: string;
 }
 

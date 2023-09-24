@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as dayjs from 'dayjs'
 
+import { TimeHandler } from 'src/common/utils/timeHandler.util';
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
@@ -37,6 +37,7 @@ export class MovementsService {
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -46,7 +47,7 @@ export class MovementsService {
   public create = async (createMovementsDto: CreateMovementDto, userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: dayjs().format('DD/MM/YYYY') })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getNow('simple') })
 
       if(haveFinal) {
         throw {
@@ -88,8 +89,8 @@ export class MovementsService {
 
   public dailyResume= async (userRequest: User) => {
     try {
-      const today = dayjs().format('DD/MM/YYYY')
-      const yesterday = dayjs().subtract(1, 'day').format('DD/MM/YYYY')
+      const today = this.timeHandler.getTimeEntity().format('DD/MM/YYYY')
+      const yesterday = this.timeHandler.getTimeEntity().subtract(1, 'day').format('DD/MM/YYYY')
 
       const movementsFromYesterday = await this.movementModel.find({ movementDate: yesterday })
       const movementsFromToday = await this.movementModel.find({ movementDate: today }).sort({ createdAt: 'asc' }).populate('paymentPicture')
