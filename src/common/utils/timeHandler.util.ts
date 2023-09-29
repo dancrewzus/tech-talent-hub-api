@@ -22,6 +22,10 @@ export class TimeHandler {
     return dayjs().format(format === 'full' ? FULL_FORMAT : SIMPLE_FORMAT)
   }
 
+  static getTimeEntity = () => {
+    return dayjs()
+  }
+
   private getFormat = (format: string) => {
     return format === 'full' ? FULL_FORMAT : SIMPLE_FORMAT
   }

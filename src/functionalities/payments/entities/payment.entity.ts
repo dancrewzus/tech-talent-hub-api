@@ -2,7 +2,18 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { TimeHandler } from 'src/common/utils/timeHandler.util';
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
@@ -30,19 +41,19 @@ export class Payment extends Document {
   @Prop({ type: Number, required: true })
   paymentNumber: number;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: true })
   paymentPicture: Image;
   
-  @ApiProperty({ example: TimeHandler.getNow(), description: 'Payment date.' })
-  @Prop({ type: String, default: TimeHandler.getNow() })
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Payment date.' })
+  @Prop({ type: String, required: true })
   paymentDate: string;
   
-  @ApiProperty({ example: TimeHandler.getNow(), description: 'Creation date.' })
-  @Prop({ type: String, default: TimeHandler.getNow() })
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
+  @Prop({ type: String, required: true })
   createdAt?: string;
   
-  @ApiProperty({ example: TimeHandler.getNow(), description: 'Updated date.' })
-  @Prop({ type: String, default: TimeHandler.getNow() })
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
+  @Prop({ type: String, required: true })
   updatedAt?: string;
 }
 

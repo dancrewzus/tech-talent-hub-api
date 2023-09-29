@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsOptional, IsPositive, IsString, Min } from "class-validator";
+import { IsNumber, IsPositive, IsString, Min } from "class-validator";
 
 export class CreatePaymentDto {
 
@@ -13,7 +13,6 @@ export class CreatePaymentDto {
   
   @ApiProperty({ type: String, description: 'Image ID', example: '654564sd' })
   @IsString()
-  @IsOptional()
   paymentPicture: string
   
   @ApiProperty({ type: String, description: 'Payment date. Format DD/MM/YYYY', example: '05/08/2023' })

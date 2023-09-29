@@ -2,7 +2,18 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { TimeHandler } from 'src/common/utils/timeHandler.util';
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
 
@@ -78,10 +89,12 @@ export class User extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   createdBy: User;
 
-  @Prop({ type: String, default: TimeHandler.getNow() })
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
+  @Prop({ type: String, required: true })
   createdAt?: string;
   
-  @Prop({ type: String, default: TimeHandler.getNow() })
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
+  @Prop({ type: String, required: true })
   updatedAt?: string;
 }
 

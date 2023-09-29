@@ -3,7 +3,24 @@ import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 
-import { TimeHandler } from 'src/common/utils/timeHandler.util';
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 import { HandleErrors } from '../../common/utils/handleErrors.util'
 import { Movement } from '../movements/entities/movement.entity'
 import { CreateContractDto } from './dto/create-contract.dto'
@@ -150,7 +167,6 @@ export class ContractsService {
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -160,23 +176,29 @@ export class ContractsService {
   public create = async (createContractDto: CreateContractDto, userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getNow('simple') })
+      const now = dayjs.tz()
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY') })
 
       if(haveFinal) {
         throw {
           code: 3000,
-          message: 'Não é mais possível cadastrar mais movimentos, verifique amanhã',
+          message: 'No es posible registrar más movimientos, verifique mañana',
         }
       }
       
-      const { client, ...contractData } = createContractDto
+      const { client, lastContractDate, ...contractData } = createContractDto
+
       const clientExist = await this.userModel.findOne({ _id: client })
       if(!clientExist) {
-        throw new BadRequestException(`Invalid client`)
+        throw new BadRequestException(`Cliente incorrecto`)
       }
+      
       const contract = await this.contractModel.create({
         createdBy: userRequest.id,
         client: clientExist.id,
+        lastContractDate: lastContractDate ? lastContractDate : now.format('DD/MM/YYYY'),
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         ...contractData,
       });
 
@@ -184,7 +206,10 @@ export class ContractsService {
         createdBy: userRequest.id,
         amount: contract.loanAmount,
         type: 'out',
-        description: 'Novo contrato',
+        description: 'Nuevo contrato',
+        movementDate: now.format('DD/MM/YYYY'),
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       })
       return contract;
     } catch (error) {
@@ -212,7 +237,7 @@ export class ContractsService {
         .populate({ path: 'client' })
         .populate({ path: 'paymentList' })
 
-      const today = this.timeHandler.getTimeEntity()
+      const today = dayjs.tz()
       const pendingArray: any = []
 
       // Nombre/ monto del contrato/ lo que le falta/valor parcela/ parcela  atrasado/parcela  pagas/parcelas faltantes
@@ -222,7 +247,7 @@ export class ContractsService {
         const contract = contracts[index];
 
         const { paymentList, client, payments, createdAt, nonWorkingDays, paymentAmount } = contract
-        const contractInitDate = this.timeHandler.formatDate({ date: createdAt, format: 'full'})
+        const contractInitDate = dayjs(createdAt, 'DD/MM/YYYY HH:mm:ss').tz() //.format('DD/MM/YYYY HH:mm:ss')
         const havePayments = paymentList.length ? true : false
         const paymentDays: any[] = [];
   
@@ -306,7 +331,7 @@ export class ContractsService {
       const client = await this.userModel.findOne({ _id: clientId }).populate('createdBy')
 
       if(!client) {
-        throw new BadRequestException(`Invalid client`)
+        throw new BadRequestException(`Cliente incorrecto`)
       }
 
       const contractsQuantity = await this.contractModel.count({ client: clientId })
@@ -327,17 +352,19 @@ export class ContractsService {
             haveActiveContracts: false,
             patchValue: {
               countContracts  : contractsQuantity,
-              lastContractDate: this.timeHandler.formatDateString({ date: allContractsByUser[0]?.createdAt || null, format: 'full' })
+              lastContractDate: allContractsByUser.length > 0 ? dayjs(allContractsByUser[0]?.createdAt, 'DD/MM/YYYY HH:mm:ss').tz() : null
             }
           }
         }
       }
 
-      const today = this.timeHandler.getTimeEntity()
+      const today = dayjs.tz()
       const lastContract = contractsByUser[0];
+
       const movementList = [] 
       const paymentList = []
       
+      // IMAGES MANAGE
       for (let index = 0; index < lastContract.paymentList.length; index++) {
         const payment = lastContract.paymentList[index];
         const paymentPicture = await this.imageModel.findOne({ _id: payment.paymentPicture })
@@ -355,14 +382,15 @@ export class ContractsService {
 
         movementList.push(movement)
       }
+      // END 
 
       const havePayments = paymentList.length ? true : false
 
       let paidAmount = 0
       let payments = 0
 
-      const contractCreatedDate = this.timeHandler.formatDate({ date: lastContract.createdAt, format: 'full' })
-      const contractInitDate = this.timeHandler.formatDate({ date: lastContract.createdAt, format: 'full' })
+      const contractCreatedDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+      const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
       const totalPayments = lastContract.payments || 0
       const daysOff = lastContract.nonWorkingDays || ''
       const amount = lastContract.paymentAmount || 0
@@ -375,6 +403,8 @@ export class ContractsService {
 
       let daysLate = 0
       let daysExpired = 0
+      let pending = 0
+      // let incompleteAmount = 0
       
       let index = 0
       while (paymentDays.length < totalPayments) {
@@ -414,6 +444,7 @@ export class ContractsService {
           });
           if(sum < amount) {
             color = this.ColorConstants.NOT_PAYED
+            pending += (amount - sum)
             paymentIncompleteDays.push(exist)
           } else {
             color = this.ColorConstants.PAYED
@@ -426,6 +457,7 @@ export class ContractsService {
           // Dias de atraso
           if((isBefore || isToday) && isPayDay) {
             color = this.ColorConstants.NOT_PAYED
+            pending += lastContract.paymentAmount
             daysLate++
           }
         }
@@ -485,6 +517,8 @@ export class ContractsService {
             lastContractDate: contractCreatedDate.format('DD/MM/YYYY'),
             clientOpen      : outstanding,
             clientStablish  : paidAmount,
+            pending,
+            // incompleteAmount,
             daysLate,
             daysExpired,
             paymentClientNumber,

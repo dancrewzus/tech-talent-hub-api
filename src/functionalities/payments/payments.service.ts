@@ -2,8 +2,26 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { BSON } from 'mongodb';
 
-import { TimeHandler } from 'src/common/utils/timeHandler.util';
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
@@ -12,7 +30,6 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Image } from '../images/entities/image.entity';
 import { Payment } from './entities/payment.entity';
-import { BSON } from 'mongodb';
 
 @Injectable()
 export class PaymentsService {
@@ -25,7 +42,6 @@ export class PaymentsService {
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -35,12 +51,13 @@ export class PaymentsService {
   public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getTimeEntity() })
+      const now = dayjs.tz()
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY') })
 
       if(haveFinal) {
         throw {
           code: 3000,
-          message: 'Não é mais possível cadastrar mais movimentos, verifique amanhã',
+          message: 'No es posible registrar más movimientos, verifique mañana',
         }
       }
       
@@ -54,19 +71,16 @@ export class PaymentsService {
         .populate('movementList')
 
       if(!contractExist) {
-        throw new BadRequestException(`Invalid contract`)
+        throw new BadRequestException(`No es posible encontrar el contrato con ID "${ contract }"`)
       }
 
       if(!contractExist.client._id.equals(clientId)) {
-        throw new BadRequestException(`Invalid client`)
+        throw new BadRequestException(`Cliente incorrecto`)
       }
 
-      let databasePaymentPicture = null
-      if(paymentPicture !== '') {
-        databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
-        if(!databasePaymentPicture) {
-          throw new NotFoundException(`Image with id "${ paymentPicture }" not found`)
-        }
+      const databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
+      if(!databasePaymentPicture) {
+        throw new NotFoundException(`No es posible encontrar la imagen con ID "${ paymentPicture }"`)
       }
 
       let totalAmount = 0
@@ -82,6 +96,8 @@ export class PaymentsService {
           paymentNumber,
           paymentDate,
           paymentPicture: databasePaymentPicture?.id || null,
+          createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+          updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         });
   
         contractExist.paymentList.push(payment);
@@ -104,9 +120,12 @@ export class PaymentsService {
         createdBy: userRequest.id,
         contract,
         amount: totalAmount,
-        type: 'in',
-        description: 'Pagamento relacionado ao contrato',
         paymentPicture: databasePaymentPicture?.id || null,
+        type: 'in',
+        description: 'Pago relacionado a contrato',
+        movementDate: now.format('DD/MM/YYYY'),
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       })
 
       contractExist.movementList.push(movement);

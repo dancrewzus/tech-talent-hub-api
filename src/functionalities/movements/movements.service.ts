@@ -3,7 +3,24 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { TimeHandler } from 'src/common/utils/timeHandler.util';
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
@@ -37,7 +54,6 @@ export class MovementsService {
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly timeHandler: TimeHandler,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
@@ -47,12 +63,13 @@ export class MovementsService {
   public create = async (createMovementsDto: CreateMovementDto, userRequest: User) => {
     try {
 
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: this.timeHandler.getNow('simple') })
+      const now = dayjs.tz()
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY') })
 
       if(haveFinal) {
         throw {
           code: 3000,
-          message: 'Não é mais possível cadastrar mais movimentos, verifique amanhã',
+          message: 'No es posible registrar más movimientos, verifique mañana',
         }
       }
 
@@ -60,16 +77,12 @@ export class MovementsService {
         amount,
         type,
         description,
-        movementDate,
         paymentPicture,
       } = createMovementsDto
 
-      let databasePaymentPicture = null
-      if(paymentPicture !== '') {
-        databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
-        if(!databasePaymentPicture) {
-          throw new NotFoundException(`Image with id "${ paymentPicture }" not found`)
-        }
+      const databasePaymentPicture = await this.imageModel.findOne({ _id : paymentPicture })
+      if(!databasePaymentPicture) {
+        throw new NotFoundException(`No es posible encontrar la imagen con ID "${ paymentPicture }"`)
       }
 
       await this.movementModel.create({
@@ -77,8 +90,10 @@ export class MovementsService {
         amount,
         type,
         description,
-        movementDate,
         paymentPicture: databasePaymentPicture?.id || null,
+        movementDate: now.format('DD/MM/YYYY'),
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       });
 
       return;
@@ -89,8 +104,8 @@ export class MovementsService {
 
   public dailyResume= async (userRequest: User) => {
     try {
-      const today = this.timeHandler.getTimeEntity().format('DD/MM/YYYY')
-      const yesterday = this.timeHandler.getTimeEntity().subtract(1, 'day').format('DD/MM/YYYY')
+      const today = dayjs.tz().format('DD/MM/YYYY')
+      const yesterday = dayjs.tz().subtract(1, 'day').format('DD/MM/YYYY')
 
       const movementsFromYesterday = await this.movementModel.find({ movementDate: yesterday })
       const movementsFromToday = await this.movementModel.find({ movementDate: today }).sort({ createdAt: 'asc' }).populate('paymentPicture')
@@ -128,7 +143,7 @@ export class MovementsService {
             createdBy: userRequest.id,
             amount: calculatedYesterdayAmount,
             type: 'final',
-            description: 'Feche a caixa',
+            description: 'Cierre de caja',
             movementDate: yesterday,
           })
 

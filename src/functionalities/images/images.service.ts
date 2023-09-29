@@ -3,16 +3,30 @@ import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 import { HandleErrors } from '../../common/utils/handleErrors.util'
 import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
 import { PaginationDto } from 'src/common/dto/pagination.dto'
 import { CreateImageDto } from './dto/create-image.dto'
 import { User } from '../users/entities/user.entity'
 import { Image } from './entities/image.entity'
-
-import * as customParseFormat from 'dayjs/plugin/customParseFormat'
-import * as dayjs from 'dayjs'
-dayjs.extend(customParseFormat)
 
 @Injectable()
 export class ImagesService {
@@ -42,8 +56,11 @@ export class ImagesService {
 
       const cloudResponse = await this.cloudAdapter.uploadImage(base64, type)
 
+      const now = dayjs.tz()
       const image = await this.imageModel.create({
         createdBy: userRequest.id,
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         ...cloudResponse,
       });
       return this.formatReturnData(image);

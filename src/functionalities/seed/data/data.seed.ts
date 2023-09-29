@@ -1,9 +1,28 @@
 import { Injectable, Logger } from "@nestjs/common"
 
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 @Injectable()
 export class SeedData {
 
   private logger
+  private now = dayjs.tz()
 
   constructor() {
     this.logger = new Logger('Seed Data')
@@ -14,21 +33,29 @@ export class SeedData {
       name: 'root',
       primary: false,
       status: true,
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
     {
       name: 'admin',
       primary: false,
       status: true,
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
     {
       name: 'client',
       primary: true,
       status: true,
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
     {
       name: 'collector',
       primary: false,
       status: true,
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
   ]
 
@@ -47,6 +74,8 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
     {
       email: 'adumbledore@howarts.magic',
@@ -62,6 +91,8 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
     {
       email: 'hpotter@howarts.magic',
@@ -77,6 +108,8 @@ export class SeedData {
       residenceAddress: 'Privet Drive Nro. 4',
       billingAddress: 'Hogwarts',
       phoneNumber: '123456789',
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },
   ]
   

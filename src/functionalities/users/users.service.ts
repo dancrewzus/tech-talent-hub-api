@@ -4,6 +4,24 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt'
 
+/**
+ * DATE MANAGEMENT
+ */
+
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Sao_Paulo')
+
+// END DATE MANAGEMENT
+
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 // import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Image } from '../images/entities/image.entity';
@@ -80,6 +98,8 @@ export class UsersService {
   
   public create = async (createUserDto: CreateUserDto, userRequest: User) => {
     try {
+      
+      const now = dayjs.tz()
       const { cpf, role, password, email, profilePicture, addressPicture, ...data } = createUserDto;
       const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
       if(!databaseRole) {
@@ -110,6 +130,8 @@ export class UsersService {
         addressPicture: databaseAddressPicture?.id || null,
         email,
         cpf,
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         ...data
       });
 
