@@ -10,7 +10,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Sao_Paulo')
+dayjs.tz.setDefault('America/Manaus')
 
 const FULL_FORMAT = 'DD/MM/YYYY HH:mm:ss'
 const SIMPLE_FORMAT = 'DD/MM/YYYY'

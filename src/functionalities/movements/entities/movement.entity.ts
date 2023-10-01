@@ -12,7 +12,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Sao_Paulo')
+dayjs.tz.setDefault('America/Manaus')
 
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { Image } from 'src/functionalities/images/entities/image.entity';
