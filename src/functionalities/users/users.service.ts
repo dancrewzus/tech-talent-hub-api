@@ -90,7 +90,6 @@ export class UsersService {
   }
 
   private searchType = (search: string | number): string => {
-    console.log("🚀 ~ file: users.service.ts:75 ~ UsersService ~ search:", search)
     if(isValidObjectId(search)) return 'id'
     if(!isNaN(Number(search))) return 'cpf'
     return 'invalid'
@@ -319,6 +318,31 @@ export class UsersService {
         throw new NotFoundException(`User with ${ searchTypeResponse } "${ search }" not found`)
       }
       return this.formatReturnData(user)
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public clientExist = async (search: string) => {
+    try {
+      let user: User;
+      const searchTypeResponse = this.searchType(search)
+      try {
+        switch (searchTypeResponse) {
+          case 'id':
+            user = await this.userModel.findById(search)
+            break;
+          case 'cpf':
+            user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
+            break;
+          default:
+            user = null;
+            break;
+        }
+      } catch (error) {
+        this.handleErrors.handleExceptions(error)
+      }
+      return { exist: user ? true : false }
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

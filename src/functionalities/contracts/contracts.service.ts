@@ -206,7 +206,7 @@ export class ContractsService {
         createdBy: userRequest.id,
         amount: contract.loanAmount,
         type: 'out',
-        description: 'Nuevo contrato',
+        description: `Nuevo contrato: ${ clientExist.firstName } ${ clientExist.paternalSurname }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
@@ -305,7 +305,9 @@ export class ContractsService {
           pendingArray.push({
             client: this.formatReturnClientData(clientData, daysLate, daysIncomplete),
             contractData: {
-              amount: contract.totalAmount, // Monto del contrato
+              loanAmount: contract.loanAmount, // Monto del prestamos
+              amount: contract.totalAmount, // Monto total del contrato
+              payed: payed, // Lo que ha pagado
               pending: (contract.totalAmount - payed), // Lo que le falta
               payment: paymentAmount, // Valor de la parcela
               late: daysLate, // Parcelas atrasadas

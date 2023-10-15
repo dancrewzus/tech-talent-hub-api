@@ -105,80 +105,52 @@ export class MovementsService {
   public dailyResume= async (userRequest: User) => {
     try {
       const today = dayjs.tz().format('DD/MM/YYYY')
-      const yesterday = dayjs.tz().subtract(1, 'day').format('DD/MM/YYYY')
 
-      const movementsFromYesterday = await this.movementModel.find({ movementDate: yesterday })
-      const movementsFromToday = await this.movementModel.find({ movementDate: today }).sort({ createdAt: 'asc' }).populate('paymentPicture')
+      const movements = await this.movementModel.find().sort({ createdAt: 'asc' }).populate('paymentPicture')
+      const incomesMovementsFromToday = []
+      const expensesMovementsFromToday = []
 
       let haveFinalMovement = false
-      let calculatedYesterdayAmount = 0
-      let yesterdayAmount = 0
+      let beforeAmount = 0
       let todayAmount = 0
 
-      if(movementsFromYesterday && movementsFromYesterday.length) {
-        const haveFinalMovement = movementsFromYesterday.find((mov) => mov.type === 'final')
+      movements.forEach((movement) => {
 
-        movementsFromYesterday.forEach((movement) => {
+        const isFromToday = movement.movementDate === today
 
-          switch (movement.type) {
-            
-            case 'final':
-              yesterdayAmount += movement.amount
-              break;
-            
-            case 'in':
-              calculatedYesterdayAmount += movement.amount
-              break;
+        switch (movement.type) {
 
-            case 'out':
-              calculatedYesterdayAmount -= movement.amount
-              break;
-
-            default: break;
-          }
-        });
-
-        if(!haveFinalMovement) {
-          await this.movementModel.create({
-            createdBy: userRequest.id,
-            amount: calculatedYesterdayAmount,
-            type: 'final',
-            description: 'Cierre de caja',
-            movementDate: yesterday,
-          })
-
-          yesterdayAmount = calculatedYesterdayAmount
-        }
-      }
-
-
-      todayAmount += yesterdayAmount
-      
-      if(movementsFromToday && movementsFromToday.length) {
-        const finalMov = movementsFromToday.find((mov) => mov.type === 'final')
-        haveFinalMovement = finalMov ? true : false
-
-        movementsFromToday.forEach((movement) => {
-          switch (movement.type) {
-
-            case 'in':
-              todayAmount += movement.amount
-              break;
-
-            case 'out':
-              todayAmount -= movement.amount
-              break;
+          case 'final':
+            if(isFromToday) haveFinalMovement = true
+            break;
           
-            default: break;
-          }
-        });
-      }
+          case 'in':
+            if(!isFromToday) beforeAmount += movement.amount
+            else {
+              todayAmount += movement.amount
+              incomesMovementsFromToday.push(this.formatReturnMovementData(movement))
+            }
+            break;
+
+          case 'out':
+            if(!isFromToday) beforeAmount -= movement.amount
+            else {
+              todayAmount -= movement.amount
+              expensesMovementsFromToday.push(this.formatReturnMovementData(movement))
+            }
+            break;
+
+          default: break;
+        }
+      });
+
+      todayAmount += beforeAmount
 
       return {
-        yesterdayAmount,
         todayAmount,
-        movementsFromToday: movementsFromToday.filter((mov) => mov.type !== 'final').map((e) => this.formatReturnMovementData(e)),
-        closed: haveFinalMovement
+        movementsFromToday: { incomesMovementsFromToday, expensesMovementsFromToday },
+        closed: haveFinalMovement,
+        yesterdayAmount: beforeAmount,
       }
 
     } catch (error) {

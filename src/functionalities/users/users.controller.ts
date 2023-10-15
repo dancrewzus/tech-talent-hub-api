@@ -64,6 +64,12 @@ export class UsersController {
   findOne(@Param('search') search: string) {
     return this.usersService.findOne(search);
   }
+  
+  @Get('/exist/:search')
+  @Auth()
+  clientExist(@Param('search') search: string) {
+    return this.usersService.clientExist(search);
+  }
 
   @Patch(':search')
   @Auth()

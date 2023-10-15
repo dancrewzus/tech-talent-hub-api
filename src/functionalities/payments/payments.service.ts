@@ -122,7 +122,7 @@ export class PaymentsService {
         amount: totalAmount,
         paymentPicture: databasePaymentPicture?.id || null,
         type: 'in',
-        description: 'Pago relacionado a contrato',
+        description: `${ contractExist.client.firstName } ${ contractExist.client.paternalSurname }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
