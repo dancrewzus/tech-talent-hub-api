@@ -10,6 +10,7 @@ import { GetUser } from './decorators/get-user.decorator'
 import { Auth } from './decorators/auth.decorator'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
+import { PasswordDto } from './dto/password.dto'
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -42,8 +43,8 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request. CPF or password not satisfied some conditions.', type: ErrorResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials. CPF or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  changePassword(@Body() loginDto: LoginDto) {
-    return this.authService.changePassword(loginDto)
+  changePassword(@Body() passwordDto: PasswordDto) {
+    return this.authService.changePassword(passwordDto)
   }
 
   @Get('check-status')
