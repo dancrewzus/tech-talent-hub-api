@@ -29,6 +29,21 @@ export class MovementsController {
   ) {
     return this.movementsService.create(createMovementDto, user);
   }
+  
+  @Post('validate-movement')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contract created', type: Movement })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  validateMovement(
+    @Body() data: any,
+    @GetUser() user: User
+  ) {
+    return this.movementsService.validateMovement(data.id, user);
+  }
 
   @Get('daily-resume')
   @HttpCode(200)
@@ -42,6 +57,20 @@ export class MovementsController {
     @GetUser() user: User
   ) {
     return this.movementsService.dailyResume(user);
+  }
+
+  @Get('pending')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Daily resume data' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  pending(
+    @GetUser() user: User
+  ) {
+    return this.movementsService.pending(user);
   }
 
   @Get(':id')

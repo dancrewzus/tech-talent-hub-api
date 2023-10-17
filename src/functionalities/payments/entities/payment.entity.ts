@@ -15,6 +15,7 @@ dayjs.extend(utc)
 dayjs.tz.setDefault('America/Manaus')
 
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
+import { Movement } from 'src/functionalities/movements/entities/movement.entity';
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
 
@@ -41,6 +42,13 @@ export class Payment extends Document {
   @Prop({ type: Number, required: true })
   paymentNumber: number;
 
+  @ApiProperty({ type: Boolean, description: 'Is validated?', example: true })
+  @Prop({ type: Boolean, default: false })
+  status: boolean;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Movement', required: true })
+  movement: Movement;
+  
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: true })
   paymentPicture: Image;
   

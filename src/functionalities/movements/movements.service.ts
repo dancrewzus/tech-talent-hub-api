@@ -49,6 +49,19 @@ export class MovementsService {
     }
   }
 
+  private parseDay = (day: number): string => {
+    switch (day) {
+      case 0: return 'Sun';
+      case 1: return 'Mon';
+      case 2: return 'Tue';
+      case 3: return 'Wed';
+      case 4: return 'Thu';
+      case 5: return 'Fri';
+      case 6: return 'Sat';
+      default: return '';
+    }
+  }
+
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
@@ -87,6 +100,8 @@ export class MovementsService {
 
       await this.movementModel.create({
         createdBy: userRequest.id,
+        status: 'validated',
+        validatedBy: userRequest.id,
         amount,
         type,
         description,
@@ -106,13 +121,19 @@ export class MovementsService {
     try {
       const today = dayjs.tz().format('DD/MM/YYYY')
 
+      // Movements related
+
       const movements = await this.movementModel.find().sort({ createdAt: 'asc' }).populate('paymentPicture')
       const incomesMovementsFromToday = []
       const expensesMovementsFromToday = []
 
       let haveFinalMovement = false
+      let expensesAmount = 0
+      let incomesAmount = 0
       let beforeAmount = 0
       let todayAmount = 0
+
+      let amountCollected = 0
 
       movements.forEach((movement) => {
 
@@ -129,6 +150,12 @@ export class MovementsService {
             else {
               todayAmount += movement.amount
               incomesMovementsFromToday.push(this.formatReturnMovementData(movement))
+
+              if(!movement.description.includes('Abono: ')) {
+                incomesAmount += movement.amount  
+              } else {
+                amountCollected += movement.amount  
+              }
             }
             break;
 
@@ -137,6 +164,10 @@ export class MovementsService {
             else {
               todayAmount -= movement.amount
               expensesMovementsFromToday.push(this.formatReturnMovementData(movement))
+
+              if(!movement.description.includes('Nuevo contrato: ')) {
+                expensesAmount += movement.amount  
+              }
             }
             break;
 
@@ -146,12 +177,124 @@ export class MovementsService {
 
       todayAmount += beforeAmount
 
+      // Contracts related
+
+      const activeContracts = await this.contractModel
+        .find({ status: true })
+        .sort({ createdAt: 'asc' })
+        .populate('paymentList')
+        .populate('movementList')
+
+      let amountToBeCollected = 0
+      let amountContractsFromToday = 0
+
+      let paymentsToBeCollected = 0
+      let contractsFromToday = 0
+      let paymentsCollected = 0
+        
+      activeContracts.forEach((contract) => {
+
+        const contractInitDate = dayjs(contract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+        const paymentList = contract.paymentList || []
+        const totalPayments = contract.payments || 0
+        const daysOff = contract.nonWorkingDays || ''
+        const amount = contract.paymentAmount || 0
+        const paymentDays: any[] = [];
+
+        const havePayments = paymentList.length ? true : false
+
+        let index = 0
+        while (paymentDays.length < totalPayments) {
+
+          const date = contractInitDate.add(index, 'day')
+          const day = date.day()
+          const parsedDay = this.parseDay(day)
+          const isSameContractDate = date.isSame(contractInitDate)
+          const isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
+
+          if(isPayDay) {
+            paymentDays.push(date.format('DD/MM/YYYY'))
+
+            if(date.format('DD/MM/YYYY') === today) {
+              
+              amountToBeCollected += amount
+              paymentsToBeCollected++
+              
+              const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today) : null
+              
+              if(havePaymentsByDate && havePaymentsByDate.length) {
+                paymentsCollected++
+              }
+            }
+          }
+
+
+          index++
+        }
+
+        if(contractInitDate.format('DD/MM/YYYY') === today) {
+          amountContractsFromToday += contract.loanAmount
+          contractsFromToday++
+        }
+
+      });
+
       return {
-        todayAmount,
         movementsFromToday: { incomesMovementsFromToday, expensesMovementsFromToday },
         closed: haveFinalMovement,
-        yesterdayAmount: beforeAmount,
+        amountContractsFromToday,
+        paymentsToBeCollected,
+        amountToBeCollected,
+        contractsFromToday,
+        paymentsCollected,
+        amountCollected,
+        expensesAmount,
+        incomesAmount,
+        beforeAmount,
+        todayAmount,
       }
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+  
+  public pending= async (userRequest: User) => {
+    try {
+      const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
+      
+      let todayAmount = 0
+
+      movements.forEach((movement) => {
+        todayAmount += movement.amount
+      });
+
+
+      return {
+        todayAmount,
+        data: movements.map((movement) => this.formatReturnMovementData(movement)),
+      }
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public validateMovement= async (id: string, userRequest: User) => {
+    try {
+      const movement = await this.movementModel.findById(id).populate('paymentList')
+      if(!movement) {
+        throw new NotFoundException(`Payment with id "${ id }" not found`)
+      }
+      const { paymentList } = movement
+      for (let index = 0; index < paymentList.length; index++) {
+        const payment = paymentList[index];
+        payment.status = true
+        await payment.save()
+      }
+      movement.status = 'validated'
+      await movement.save()
+      return
 
     } catch (error) {
       this.handleErrors.handleExceptions(error)

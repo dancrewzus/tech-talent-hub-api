@@ -17,6 +17,7 @@ dayjs.tz.setDefault('America/Manaus')
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
+import { Payment } from 'src/functionalities/payments/entities/payment.entity';
 
 @Schema()
 export class Movement extends Document {
@@ -43,6 +44,18 @@ export class Movement extends Document {
   @ApiProperty({ example: 'Payment of contract #', description: 'Movement description.' })
   @Prop({ type: String, required: true })
   description: string;
+
+  @ApiProperty({ type: String, description: 'Movement status', example: 'pending' })
+  @Prop({ type: String, required: true, enum: [ 'pending', 'validated' ] })
+  status: string;
+
+  @ApiProperty({ type: String, description: 'User who validate this movement', example: '6472d32b20f00d485b965c1e' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  validatedBy: User;
+
+  @ApiProperty({ description: 'List of payments.', type: [String] })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Payment' }], select: false })
+  paymentList: Payment[];
   
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY'), description: 'Movement date.' })
   @Prop({ type: String, required: true })

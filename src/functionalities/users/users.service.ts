@@ -61,7 +61,9 @@ export class UsersService {
   }
 
   private formatReturnData = (user: User) => {
+
     if(!user.isActive) return
+    
     const permission: string = user.role 
       ? this.getUserPermissions(user.role.name) 
       : ''

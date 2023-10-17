@@ -36,6 +36,10 @@ export class PaymentsService {
 
   private defaultLimit: number;
 
+  private capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   constructor(
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
@@ -84,12 +88,14 @@ export class PaymentsService {
       }
 
       let totalAmount = 0
+      const paymentsToCreate = []
 
       for (let index = 0; index < createPaymentsDto.length; index++) {
         const createPaymentDto = createPaymentsDto[index];
         const { client, contract, amount, paymentDate, paymentNumber } = createPaymentDto
-        const payment = await this.paymentModel.create({
+        paymentsToCreate.push({
           createdBy: userRequest.id,
+          status: userRequest.role.name != 'client' ? true : false,
           client,
           contract,
           amount,
@@ -99,8 +105,6 @@ export class PaymentsService {
           createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
           updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         });
-  
-        contractExist.paymentList.push(payment);
   
         let payments = 0
         for(const payment of contractExist?.paymentList) {
@@ -118,15 +122,26 @@ export class PaymentsService {
       // MOVEMENT CREATE
       const movement = await this.movementModel.create({
         createdBy: userRequest.id,
+        status: userRequest.role.name != 'client' ? 'validated' : 'pending',
+        validatedBy: userRequest.id,
         contract,
         amount: totalAmount,
         paymentPicture: databasePaymentPicture?.id || null,
         type: 'in',
-        description: `${ contractExist.client.firstName } ${ contractExist.client.paternalSurname }`,
+        description: `Abono: ${ this.capitalizeFirstLetter(contractExist.client.firstName) } ${ this.capitalizeFirstLetter(contractExist.client.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       })
+
+      for (let index = 0; index < paymentsToCreate.length; index++) {
+        const payment = paymentsToCreate[index];
+        const pay = await this.paymentModel.create({ ...payment, movement: movement.id })
+        contractExist.paymentList.push(pay);
+        movement.paymentList.push(pay);
+      }
+
+      await movement.save();
 
       contractExist.movementList.push(movement);
       await contractExist.save();

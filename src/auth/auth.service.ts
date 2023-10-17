@@ -33,6 +33,10 @@ export class AuthService {
     }
   }
 
+  private capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   private formatReturnData = (user: User) => {
   
     const permission: string = user.role 
@@ -47,15 +51,19 @@ export class AuthService {
         cpf: user.cpf,
         email: user.email,
         isLogged: user.isLogged,
-        firstName: user.firstName || '',
-        secondName: user.secondName || '',
-        paternalSurname: user.paternalSurname || '',
-        maternalSurname: user.maternalSurname || '',
+        fullname: `${ this.capitalizeFirstLetter(user.firstName) } ${ this.capitalizeFirstLetter(user.paternalSurname) }` || '',
+        firstName: this.capitalizeFirstLetter(user.firstName) || '',
+        secondName: this.capitalizeFirstLetter(user.secondName) || '',
+        paternalSurname: this.capitalizeFirstLetter(user.paternalSurname) || '',
+        maternalSurname: this.capitalizeFirstLetter(user.maternalSurname) || '',
         birthDate: user.birthDate || '',
-        profilePicture: user.profilePicture || '',
+        profilePicture: user.profilePicture?.imageUrl || '',
+        addressPicture: user.addressPicture?.imageUrl || '',
         residenceAddress: user.residenceAddress || '',
         billingAddress: user.billingAddress || '',
         phoneNumber: user.phoneNumber || '',
+        role: user.role?.name || '',
+        gender: user.gender || '',
       },
     }
   }
@@ -76,7 +84,9 @@ export class AuthService {
       const { password, cpf } = loginDto;
       const user = await this.userModel
         .findOne({ cpf: cpf.toLowerCase().trim() })
-        .populate({ path: 'role' })
+        .populate({ path: 'role', select: 'name' })
+        .populate('profilePicture')
+        .populate('addressPicture')
       const isValidPassword = await this.validatePassword(`${ password }`, `${ user?.password }`)
       if(!user || !isValidPassword) {
         throw new UnauthorizedException('Invalid credentials')

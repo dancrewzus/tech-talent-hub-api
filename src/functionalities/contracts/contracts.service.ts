@@ -39,6 +39,7 @@ export class ContractsService {
     CLIENT_RECEIVE_PAY: '#2167CA',
     PAY_DAY: '#FFFFFF',
     NOT_PAYED: '#FF0000',
+    PENDING: '#FFD900',
     PAYED: '#22FF00',
   };
 
@@ -68,6 +69,7 @@ export class ContractsService {
       paymentDate: payment.paymentDate || '',
       createdAt: payment.createdAt || '',
       updatedAt: payment.updatedAt || '',
+      status: payment.status || false,
     }
   }
 
@@ -79,6 +81,7 @@ export class ContractsService {
       amount: movement.amount || 0,
       paymentPicture: movement.paymentPicture?.imageUrl || null,
       type: movement.type || '',
+      status: movement.status || '',
       description: movement.description || '',
       movementDate: movement.movementDate || '',
       createdAt: movement.createdAt || '',
@@ -204,9 +207,11 @@ export class ContractsService {
 
       await this.movementModel.create({
         createdBy: userRequest.id,
+        status: 'validated',
+        validatedBy: userRequest.id,
         amount: contract.loanAmount,
         type: 'out',
-        description: `Nuevo contrato: ${ clientExist.firstName } ${ clientExist.paternalSurname }`,
+        description: `Nuevo contrato: ${ this.capitalizeFirstLetter(clientExist.firstName) } ${ this.capitalizeFirstLetter(clientExist.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
@@ -369,6 +374,7 @@ export class ContractsService {
       // IMAGES MANAGE
       for (let index = 0; index < lastContract.paymentList.length; index++) {
         const payment = lastContract.paymentList[index];
+
         const paymentPicture = await this.imageModel.findOne({ _id: payment.paymentPicture })
         payment.paymentPicture = paymentPicture ? paymentPicture : payment.paymentPicture
         lastContract.paymentList[index] = payment
@@ -388,6 +394,8 @@ export class ContractsService {
 
       const havePayments = paymentList.length ? true : false
 
+      let pendingForValidate = 0
+      let paidIncompleteAmount = 0
       let paidAmount = 0
       let payments = 0
 
@@ -438,20 +446,25 @@ export class ContractsService {
         }
 
         // Se han realizado pagos
-        const exist = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : null
-        if(exist && exist.length) {
-          let sum = 0
-          exist.forEach((payment) => {
-            sum = sum + payment.amount
-          });
-          if(sum < amount) {
+        const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : null
+        if(havePaymentsByDate && havePaymentsByDate.length) {
+          let sumPaymentByDate = 0
+          havePaymentsByDate.forEach((payment) => { sumPaymentByDate = sumPaymentByDate + payment.amount });
+          if(sumPaymentByDate < amount) {
             color = this.ColorConstants.NOT_PAYED
-            pending += (amount - sum)
-            paymentIncompleteDays.push(exist)
+            pending += (amount - sumPaymentByDate)
+            paidIncompleteAmount += sumPaymentByDate
+            const existByDate = paymentIncompleteDays.findIndex((paymentDate) => paymentDate === date.format('DD/MM/YYYY'))
+            if(existByDate === -1) {
+              paymentIncompleteDays.push(date.format('DD/MM/YYYY'))
+            }
           } else {
             color = this.ColorConstants.PAYED
             payments++
           }
+
+          color = havePaymentsByDate.find((pay) => !pay.status) ? this.ColorConstants.PENDING : color
+
           if(isAhead) {
             paymentAheadDays.push(date)
           }
@@ -463,6 +476,8 @@ export class ContractsService {
             daysLate++
           }
         }
+
+        // color = haveMovements.find((mov) => mov.status === 'pending') ? this.ColorConstants.PENDING : color
 
         calendarEvents.push({
           start: date.format('YYYY-MM-DD') + 'T00:00:00',
@@ -485,13 +500,15 @@ export class ContractsService {
       let paymentClientNumber = 0
       let paymentClientAmount = 0
 
-      if(paymentIncompleteDays[0]?.length) {
-        let payed = 0
-        paymentIncompleteDays[0].forEach((payment: any) => {
-          paymentClientNumber = payment.paymentNumber
-          payed += payment.amount
-        });
-        paymentClientAmount = amount - payed
+      if(paymentIncompleteDays?.length) {
+
+        const paymentByDate = paymentList?.find((pay) => pay.paymentDate === paymentIncompleteDays[0])
+        paymentClientNumber = paymentByDate.paymentNumber
+        // let payed = 0
+        // paymentIncompleteDays.forEach((payment: any) => {
+        //   // payed += payment.amount
+        // });
+        paymentClientAmount = amount - paidIncompleteAmount
       } else {
         paymentClientNumber = payments + 1
         paymentClientAmount = amount
@@ -499,7 +516,11 @@ export class ContractsService {
 
       if(havePayments) {
         paymentList?.forEach((payment) => {
-          paidAmount += payment.amount
+          if(payment.status) {
+            paidAmount += payment.amount
+          } else {
+            pendingForValidate += payment.amount
+          }
         });
       }
 
@@ -509,7 +530,7 @@ export class ContractsService {
         data: {
           createdBy: this.formatReturnClientData(client.createdBy) || null,
           haveActiveContracts: true,
-          paymentIncompleteDays: paymentIncompleteDays[0] || [],
+          paymentIncompleteDays: paymentIncompleteDays || [],
           paymentAheadDays: paymentAheadDays || [],
           lastContract: this.formatReturnData(lastContract),
           paymentDays,
@@ -519,6 +540,7 @@ export class ContractsService {
             lastContractDate: contractCreatedDate.format('DD/MM/YYYY'),
             clientOpen      : outstanding,
             clientStablish  : paidAmount,
+            pendingForValidate,
             pending,
             // incompleteAmount,
             daysLate,
