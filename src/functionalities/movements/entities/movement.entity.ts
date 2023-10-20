@@ -57,6 +57,10 @@ export class Movement extends Document {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Payment' }], select: false })
   paymentList: Payment[];
   
+  @ApiProperty({ example: '', description: 'Movement comment.' })
+  @Prop({ type: String, required: false, default: '' })
+  comment: string;
+  
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY'), description: 'Movement date.' })
   @Prop({ type: String, required: true })
   movementDate: string;

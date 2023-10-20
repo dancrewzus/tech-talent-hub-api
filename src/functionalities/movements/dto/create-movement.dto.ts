@@ -1,12 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, Min } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
 
 export class CreateMovementDto {
 
   @ApiProperty({ type: Number, description: 'Movement amount', example: 132 })
   @IsNumber()
-  @IsPositive()
-  @Min(1)
+  @Min(0)
   amount: number
   
   @ApiProperty({ type: String, description: 'Image ID', example: '654564sd' })
@@ -31,4 +30,14 @@ export class CreateMovementDto {
   @IsString()
   @IsOptional()
   movementDate: string
+  
+  @ApiProperty({ type: String, description: 'Movement comment', example: '' })
+  @IsString()
+  @IsOptional()
+  comment: string
+  
+  @ApiProperty({ type: String, description: 'Movement creator', example: '' })
+  @IsString()
+  @IsOptional()
+  createdBy: string
 }

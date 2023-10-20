@@ -33,6 +33,21 @@ export class ContractsController {
   ) {
     return this.contractService.create(createContractDto, user)
   }
+
+  @Post('cancel-contract')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contract deleted', type: Contract })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  cancelMovement(
+    @Body() data: any,
+    @GetUser() user: User
+  ) {
+    return this.contractService.cancelContract(data.id, user);
+  }
   
   @Get()
   @Auth(ValidRoles.Root)
@@ -45,14 +60,30 @@ export class ContractsController {
     return this.contractService.findAll(paginationDto)
   }
 
+  @Get('from-today')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Daily resume data' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  movementsFromToday(
+    @GetUser() user: User
+  ) {
+    return this.contractService.contractsFromToday(user);
+  }
+
   @Get('/pending')
   @Auth()
   @ApiResponse({ status: 200, description: 'Contracts with pending payments found', type: [Contract] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not found' })
   @ApiResponse({ status: 500, description: 'Internal error.' })
-  findPendingPayments() {
-    return this.contractService.findPendingPayments()
+  findPendingPayments(
+    @GetUser() user: User
+  ) {
+    return this.contractService.findPendingPayments(user)
   }
 
   @Get('/user/:id')

@@ -42,10 +42,40 @@ export class MovementsController {
     @Body() data: any,
     @GetUser() user: User
   ) {
-    return this.movementsService.validateMovement(data.id, user);
+    return this.movementsService.validateMovement(data, user);
+  }
+  
+  @Post('cancel-movement')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contract created', type: Movement })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  cancelMovement(
+    @Body() data: any,
+    @GetUser() user: User
+  ) {
+    return this.movementsService.cancelMovement(data.id, user);
   }
 
-  @Get('daily-resume')
+  @Get('from-today/:type')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Daily resume data' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  movementsFromToday(
+    @Param('type') type: string,
+    @GetUser() user: User
+  ) {
+    return this.movementsService.movementsFromToday(type, user);
+  }
+  
+  @Get('daily-resume/:id')
   @HttpCode(200)
   @Auth()
   @ApiResponse({ status: 200, description: 'Daily resume data' })
@@ -54,9 +84,25 @@ export class MovementsController {
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   dailyResume(
+    @Param('id') id: string,
     @GetUser() user: User
   ) {
-    return this.movementsService.dailyResume(user);
+    return this.movementsService.dailyResume(id, user);
+  }
+  
+  @Get('delete-comment/:id')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Daily resume data' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  deleteComment(
+    @Param('id') id: string,
+    @GetUser() user: User
+  ) {
+    return this.movementsService.deleteComment(id, user);
   }
 
   @Get('pending')
@@ -73,18 +119,18 @@ export class MovementsController {
     return this.movementsService.pending(user);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.movementsService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.movementsService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMovementDto: UpdateMovementDto) {
-    return this.movementsService.update(+id, updateMovementDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateMovementDto: UpdateMovementDto) {
+  //   return this.movementsService.update(+id, updateMovementDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.movementsService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.movementsService.remove(+id);
+  // }
 }

@@ -10,10 +10,14 @@ import { MovementsController } from './movements.controller';
 import { CommonModule } from 'src/common/common.module';
 import { MovementsService } from './movements.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { Role, RoleSchema } from '../roles/entities/role.entity';
+import { Payment, PaymentSchema } from '../payments/entities/payment.entity';
+import { ContractsService } from '../contracts/contracts.service';
+import { PaymentsService } from '../payments/payments.service';
 
 @Module({
   controllers: [ MovementsController ],
-  providers: [ MovementsService ],
+  providers: [ MovementsService, ContractsService, PaymentsService ],
   imports: [
     AuthModule,
     ConfigModule,
@@ -28,12 +32,20 @@ import { AuthModule } from 'src/auth/auth.module';
         schema: UserSchema
       },
       {
+        name: Role.name,
+        schema: RoleSchema
+      },
+      {
         name: Contract.name,
         schema: ContractSchema
       },
       {
         name: Image.name,
         schema: ImageSchema
+      },
+      {
+        name: Payment.name,
+        schema: PaymentSchema
       },
     ])
   ]

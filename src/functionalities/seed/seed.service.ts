@@ -5,12 +5,13 @@ import { Model } from 'mongoose'
 
 import { Role } from 'src/functionalities/roles/entities/role.entity'
 import { HandleErrors } from 'src/common/utils/handleErrors.util'
+import { Contract } from '../contracts/entities/contracts.entity'
+import { Movement } from '../movements/entities/movement.entity'
+import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
+import { Payment } from '../payments/entities/payment.entity'
+import { Image } from '../images/entities/image.entity'
 import { User } from '../users/entities/user.entity';
 import { SeedData } from './data/data.seed'
-import { Contract } from '../contracts/entities/contracts.entity'
-import { Payment } from '../payments/entities/payment.entity'
-import { Movement } from '../movements/entities/movement.entity'
-import { Image } from '../images/entities/image.entity'
 
 @Injectable()
 export class SeedService {
@@ -25,12 +26,17 @@ export class SeedService {
     @InjectModel(Role.name) private readonly roleModel: Model<Role>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
+    private readonly cloudAdapter: CloudAdapter,
     private readonly seedData: SeedData
   ) {
     this.logger = new Logger('Seed Service')
   }
 
   private seedAuthenticationData = async () => {
+    // DELETE All images
+
+    await this.cloudAdapter.deleteAllResources()
+
     // CLEAR contracts and payments
     await this.imageModel.deleteMany()
     await this.contractModel.deleteMany()

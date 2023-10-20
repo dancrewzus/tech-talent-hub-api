@@ -54,4 +54,30 @@ export class CloudAdapter {
     }
   }
 
+  public deleteAllResources = async () => {
+    try {
+      this.initInstance()
+
+      await cloudinary.api.delete_all_resources()
+
+      return
+
+    } catch (error) {
+      throw new Error("Method not implemented.");
+    }
+  }
+  
+  public deleteResource = async (publicId: string) => {
+    try {
+      this.initInstance()
+
+      await cloudinary.uploader.destroy(publicId)
+
+      return
+
+    } catch (error) {
+      throw new Error("Method not implemented." + error);
+    }
+  }
+
 }

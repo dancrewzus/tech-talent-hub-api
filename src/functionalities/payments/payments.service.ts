@@ -56,7 +56,7 @@ export class PaymentsService {
     try {
 
       const now = dayjs.tz()
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY') })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY'), createdBy: userRequest.id })
 
       if(haveFinal) {
         throw {
@@ -128,7 +128,7 @@ export class PaymentsService {
         amount: totalAmount,
         paymentPicture: databasePaymentPicture?.id || null,
         type: 'in',
-        description: `Abono: ${ this.capitalizeFirstLetter(contractExist.client.firstName) } ${ this.capitalizeFirstLetter(contractExist.client.paternalSurname) }`,
+        description: `[Abono]: ${ this.capitalizeFirstLetter(contractExist.client.firstName) } ${ this.capitalizeFirstLetter(contractExist.client.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),

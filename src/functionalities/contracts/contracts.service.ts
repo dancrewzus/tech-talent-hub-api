@@ -29,6 +29,7 @@ import { Payment } from '../payments/entities/payment.entity'
 import { Image } from '../images/entities/image.entity'
 import { Contract } from './entities/contracts.entity'
 import { User } from '../users/entities/user.entity'
+import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
 
 @Injectable()
 export class ContractsService {
@@ -104,34 +105,21 @@ export class ContractsService {
       nonWorkingDays: contract.nonWorkingDays || '',
       status: contract.status || false,
       lastContractDate: contract.lastContractDate || '',
-      paymentList: contract.paymentList.map((e) => this.formatReturnPaymentListData(e)) || [],
-      movementList: contract.movementList.map((e) => this.formatReturnMovementListData(e)) || [],
+      paymentList: contract.paymentList?.map((e) => this.formatReturnPaymentListData(e)) || [],
+      movementList: contract.movementList?.map((e) => this.formatReturnMovementListData(e)) || [],
       createdAt: contract.createdAt || '',
       updatedAt: contract.updatedAt || '',
     }
     return mapped
   }
 
-  private formatReturnClientData = (user: User, daysLate = 0, daysIncomplete = 0) => {
+  private formatReturnClientData = (user: User) => {
     if(!user.isActive) return
     const permission: string = user.role 
       ? this.getUserPermissions(user.role.name) 
       : ''
 
-    let icon = '' 
-    let color = '' 
-    
-    if(daysLate > 0) {
-      icon = 'x-circle'
-      color = 'red'
-    } else if(daysIncomplete > 0) { 
-      icon = 'alert-triangle'
-      color = 'orange'
-    }
-
     return {
-      icon,
-      color,
       permission,
       id: user.id,
       cpf: user.cpf,
@@ -165,13 +153,53 @@ export class ContractsService {
     }
   }
 
+  private deleteMovementsAndPayments = async ({ contract }) => {
+    try {
+      
+      const { paymentList, movementList, client } = contract
+
+      const contractMovementDescription = `[Nuevo contrato]: ${ this.capitalizeFirstLetter(client.firstName) } ${ this.capitalizeFirstLetter(client.paternalSurname) }`
+
+      // Delete payment list
+      for (let index = 0; index < paymentList.length; index++) {
+        const payment = paymentList[index];
+        await payment.deleteOne()
+      }
+      
+      // Delete movement list
+      for (let index = 0; index < movementList.length; index++) {
+        const movement = movementList[index];
+        const { paymentPicture } = movement
+
+        const picture = await this.imageModel.findById(paymentPicture)
+
+        await this.cloudAdapter.deleteResource(picture.publicId)
+        await picture.deleteOne()
+        await movement.deleteOne()
+      }
+
+      const expenseMovement = await this.movementModel.findOne({ description: contractMovementDescription })
+
+      if(expenseMovement) {
+        await expenseMovement.deleteOne()
+      }
+
+      await contract.deleteOne()
+
+      return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
   constructor(
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
+    private readonly cloudAdapter: CloudAdapter,
+    private readonly handleErrors: HandleErrors,
   ) {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
@@ -180,7 +208,7 @@ export class ContractsService {
     try {
 
       const now = dayjs.tz()
-      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY') })
+      const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY'), createdBy: userRequest.id })
 
       if(haveFinal) {
         throw {
@@ -211,7 +239,7 @@ export class ContractsService {
         validatedBy: userRequest.id,
         amount: contract.loanAmount,
         type: 'out',
-        description: `Nuevo contrato: ${ this.capitalizeFirstLetter(clientExist.firstName) } ${ this.capitalizeFirstLetter(clientExist.paternalSurname) }`,
+        description: `[Nuevo contrato]: ${ this.capitalizeFirstLetter(clientExist.firstName) } ${ this.capitalizeFirstLetter(clientExist.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
@@ -235,9 +263,10 @@ export class ContractsService {
     }
   }
   
-  public findPendingPayments = async () => {
+  public findPendingPayments = async (userRequest: User) => {
+
     try {
-      const contracts = await this.contractModel.find({ status: true })
+      const contracts = await this.contractModel.find({ status: true, createdBy: userRequest.id })
         .sort({ createdAt: 'asc' })
         .populate({ path: 'client' })
         .populate({ path: 'paymentList' })
@@ -262,6 +291,10 @@ export class ContractsService {
         let indexPayments = 0
         let payed = 0
 
+        let todayPendingPayment = false
+        let todayNotPayed = false
+        let todayIncompletePayed = false
+
         if(havePayments) {
           paymentList.forEach((payment) => {
             payed += payment.amount
@@ -283,13 +316,33 @@ export class ContractsService {
             
             paymentDays.push(date)
             
-            if(isBefore || isToday) {
-              // Se han realizado pagos
-              const exist = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : null
-              if(exist && exist.length) {
+            if(isToday) {
+              const paymentsFromToday = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today.format('DD/MM/YYYY')) : []
+              if (paymentsFromToday.length) {
                 let sum = 0
-                exist.forEach((payment) => {
-                  sum = sum + payment.amount
+                paymentsFromToday.forEach((payment) => {
+                  sum += payment.amount
+                  if(!payment.status) {
+                    todayPendingPayment = true
+                    todayNotPayed = true
+                  }
+                });
+                if(sum < paymentAmount) {
+                  todayIncompletePayed = true
+                  daysIncomplete++
+                }
+              } else {
+                todayNotPayed = true
+                daysLate++
+              }
+            }
+
+            if(isBefore) {
+              const paymentsFromBefore = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
+              if (paymentsFromBefore.length) {
+                let sum = 0
+                paymentsFromBefore.forEach((payment) => {
+                  sum += payment.amount
                 });
                 if(sum < paymentAmount) {
                   daysIncomplete++
@@ -297,7 +350,6 @@ export class ContractsService {
                   daysPayed++
                 }
               } else {
-                // Dias de atraso
                 daysLate++
               }
             }
@@ -305,10 +357,25 @@ export class ContractsService {
           indexPayments++
         }
   
-        if(daysLate > 0 || daysIncomplete > 0) {
+        if(todayNotPayed || todayIncompletePayed || todayPendingPayment) {
+
           const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
+
+          let icon = '' 
+          let color = '' 
+          
+          if(todayNotPayed) {
+            icon = 'x-circle'
+            color = 'red'
+          } 
+          
+          if(todayIncompletePayed) { 
+            icon = 'alert-triangle'
+            color = 'orange'
+          }
+
           pendingArray.push({
-            client: this.formatReturnClientData(clientData, daysLate, daysIncomplete),
+            client: this.formatReturnClientData(clientData),
             contractData: {
               loanAmount: contract.loanAmount, // Monto del prestamos
               amount: contract.totalAmount, // Monto total del contrato
@@ -319,6 +386,9 @@ export class ContractsService {
               upToDate: daysPayed, // Parcelas al día
               incomplete: daysIncomplete, // Parcelas restantes
               remaining: payments - daysPayed, // Parcelas restantes
+              todayPendingPayment, // Pagos sin validar
+              icon,
+              color,
             }
           })
         }
@@ -463,7 +533,18 @@ export class ContractsService {
             payments++
           }
 
-          color = havePaymentsByDate.find((pay) => !pay.status) ? this.ColorConstants.PENDING : color
+          const havePendingPayments = havePaymentsByDate.filter((pay) => !pay.status)
+
+          const groupByDate = []
+          havePendingPayments.forEach((payment) => {
+            const index = groupByDate.findIndex((pay) => pay.paymentDate === payment.paymentDate)
+            if(index === -1) {
+              groupByDate.push(payment)
+              daysLate++
+            }
+          });
+
+          color = havePendingPayments.length ? this.ColorConstants.PENDING : color
 
           if(isAhead) {
             paymentAheadDays.push(date)
@@ -541,7 +622,7 @@ export class ContractsService {
             clientOpen      : outstanding,
             clientStablish  : paidAmount,
             pendingForValidate,
-            pending,
+            pending: pending + pendingForValidate,
             // incompleteAmount,
             daysLate,
             daysExpired,
@@ -572,5 +653,60 @@ export class ContractsService {
     if(modifiedCount === 0)
       throw new NotFoundException(`Contract with id "${ id }" not found.`)
     return
+  }
+
+  public contractsFromToday = async (userRequest: User) => {
+
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role) ) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
+
+    const today = dayjs.tz().format('DD/MM/YYYY')
+
+    try {
+
+      const contracts = await this.contractModel.find({ lastContractDate: today })
+        .sort({ createdAt: 'asc' })
+        .populate('createdBy')
+        .populate('client')
+        
+      return {
+        data: contracts.map((contract) => this.formatReturnData(contract)),
+      }
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public cancelContract= async (id: string, userRequest: User) => {
+    
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role) ) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
+    try {
+      const contract = await this.contractModel.findById(id)
+        .populate('paymentList')
+        .populate('movementList')
+        .populate('client')
+
+      if(!contract) {
+        throw new NotFoundException(`Contract with id "${ id }" not found`)
+      }
+      await this.deleteMovementsAndPayments({ contract })
+      return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
   }
 }
