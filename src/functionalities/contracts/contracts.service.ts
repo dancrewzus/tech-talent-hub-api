@@ -290,6 +290,7 @@ export class ContractsService {
         let daysIncomplete = 0
         let indexPayments = 0
         let payed = 0
+        let daysExpired = 0
 
         let todayPendingPayment = false
         let todayNotPayed = false
@@ -356,15 +357,21 @@ export class ContractsService {
           }
           indexPayments++
         }
-  
-        if(todayNotPayed || todayIncompletePayed || todayPendingPayment) {
+
+        // Dias expirados
+        const contractEndDate = paymentDays[paymentDays.length - 1]
+        if(contractEndDate.isBefore(today)) {
+          daysExpired = today.diff(contractEndDate, 'days')
+        }
+        
+        if(todayNotPayed || todayIncompletePayed || todayPendingPayment || daysExpired > 0) {
 
           const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
 
           let icon = '' 
           let color = '' 
           
-          if(todayNotPayed) {
+          if(todayNotPayed || daysExpired > 0) {
             icon = 'x-circle'
             color = 'red'
           } 
@@ -387,6 +394,7 @@ export class ContractsService {
               incomplete: daysIncomplete, // Parcelas restantes
               remaining: payments - daysPayed, // Parcelas restantes
               todayPendingPayment, // Pagos sin validar
+              daysExpired,
               icon,
               color,
             }

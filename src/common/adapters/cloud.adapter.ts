@@ -50,7 +50,7 @@ export class CloudAdapter {
         height: response.height,
       }
     } catch (error) {
-      throw new Error("Method not implemented.");
+      throw new Error("Cannot upload resource.");
     }
   }
 
@@ -63,7 +63,7 @@ export class CloudAdapter {
       return
 
     } catch (error) {
-      throw new Error("Method not implemented.");
+      console.log("Cannot delete all resources.");
     }
   }
   
@@ -76,7 +76,7 @@ export class CloudAdapter {
       return
 
     } catch (error) {
-      throw new Error("Method not implemented." + error);
+      console.log("Cannot delete resource. " + error.message);
     }
   }
 

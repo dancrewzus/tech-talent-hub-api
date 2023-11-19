@@ -125,10 +125,10 @@ export class MovementsService {
       });
       contract.movementList = newContractMovementList
 
-      const { paymentPicture } = movement
-      await this.cloudAdapter.deleteResource(paymentPicture.publicId)
+      // const { paymentPicture } = movement
+      // await this.cloudAdapter.deleteResource(paymentPicture.publicId)
 
-      await paymentPicture.deleteOne()
+      // await paymentPicture.deleteOne()
       await movement.deleteOne()
       await contract.save()
 
@@ -356,6 +356,16 @@ export class MovementsService {
   }
   
   public pending = async (userRequest: User) => {
+
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role)) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
+
     try {
       const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
       
@@ -369,6 +379,29 @@ export class MovementsService {
       return {
         todayAmount,
         data: movements.map((movement) => this.formatReturnMovementData(movement)),
+      }
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+  
+  public pendingCount = async (userRequest: User) => {
+
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role)) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
+
+    try {
+      const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
+
+      return {
+        data: movements.length,
       }
 
     } catch (error) {
@@ -436,7 +469,7 @@ export class MovementsService {
     const { id, amount } = data
 
     try {
-      const movement = await this.movementModel.findById(id).populate('paymentList')
+      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture')
       if(!movement) {
         throw new NotFoundException(`Payment with id "${ id }" not found`)
       }
@@ -467,7 +500,7 @@ export class MovementsService {
          * A partir de acá comienza el nuevo cálculo del movimiento y pagos
         */
 
-        const paymentPicture = await this.imageModel.findOne({ _id: movementForDelete.paymentPicture })
+        const paymentPicture = await this.imageModel.findById(movementForDelete.paymentPicture._id)
         const paymentClientAmount = amount
         /**
          * Código obtenido desde la API de contratos
@@ -552,7 +585,6 @@ export class MovementsService {
           })
         }
 
-        console.log("🚀 ~ file: movements.service.ts:508 ~ MovementsService ~ validateMovement= ~ paymentsToStore:", paymentsToStore)
         /**
          * Graba los pagos calculados y el movimiento
          */

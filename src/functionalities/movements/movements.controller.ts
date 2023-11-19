@@ -118,6 +118,20 @@ export class MovementsController {
   ) {
     return this.movementsService.pending(user);
   }
+  
+  @Get('pending-count')
+  @HttpCode(200)
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Daily resume data' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Unprocessable entity' })
+  @ApiResponse({ status: 500, description: 'Internal error' })
+  pendingCount(
+    @GetUser() user: User
+  ) {
+    return this.movementsService.pendingCount(user);
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
