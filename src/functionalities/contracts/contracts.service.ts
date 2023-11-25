@@ -105,7 +105,7 @@ export class ContractsService {
       nonWorkingDays: contract.nonWorkingDays || '',
       status: contract.status || false,
       lastContractDate: contract.lastContractDate || '',
-      paymentList: contract.paymentList?.map((e) => this.formatReturnPaymentListData(e)) || [],
+      paymentList: contract.paymentList?.map((e) => this.formatReturnPaymentListData(e)).sort((a,b) => a.paymentNumber - b.paymentNumber) || [],
       movementList: contract.movementList?.map((e) => this.formatReturnMovementListData(e)) || [],
       createdAt: contract.createdAt || '',
       updatedAt: contract.updatedAt || '',
@@ -195,6 +195,7 @@ export class ContractsService {
   constructor(
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
+    @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
@@ -292,9 +293,9 @@ export class ContractsService {
         let payed = 0
         let daysExpired = 0
 
+        let todayIncompletePayed = false
         let todayPendingPayment = false
         let todayNotPayed = false
-        let todayIncompletePayed = false
 
         if(havePayments) {
           paymentList.forEach((payment) => {
@@ -359,8 +360,9 @@ export class ContractsService {
         }
 
         // Dias expirados
+        const pendingAmount = contract.totalAmount - payed
         const contractEndDate = paymentDays[paymentDays.length - 1]
-        if(contractEndDate.isBefore(today)) {
+        if(contractEndDate.isBefore(today) && pendingAmount > 0) {
           daysExpired = today.diff(contractEndDate, 'days')
         }
         
@@ -387,7 +389,7 @@ export class ContractsService {
               loanAmount: contract.loanAmount, // Monto del prestamos
               amount: contract.totalAmount, // Monto total del contrato
               payed: payed, // Lo que ha pagado
-              pending: (contract.totalAmount - payed), // Lo que le falta
+              pending: pendingAmount, // Lo que le falta
               payment: paymentAmount, // Valor de la parcela
               late: daysLate, // Parcelas atrasadas
               upToDate: daysPayed, // Parcelas al día
@@ -428,7 +430,22 @@ export class ContractsService {
         .populate('paymentList')
         .populate('movementList')
 
-      const contractsByUser = allContractsByUser.filter((contract) => contract.status)
+      const contractsByUser = []
+      const activeContracts = allContractsByUser.filter((contract) => contract.status)
+      
+      // Check if contract is all payed
+      for (let index = 0; index < activeContracts.length; index++) {
+        const contract = activeContracts[index];
+        const validatedMovements = contract.movementList.filter((movement) => movement.status === 'validated')
+        const payed = validatedMovements.reduce((sum, mov) => sum + mov.amount, 0);
+        if(payed === contract.totalAmount) {
+          contract.status = false
+          await contract.save()
+        } else {
+          contractsByUser.push(contract)
+        }
+      }
+      // console.log("🚀 ~ file: contracts.service.ts:433 ~ ContractsService ~ findLastContract= ~ contractsByUser:", contractsByUser)
 
       if(!contractsByUser.length) {
         // throw new NotFoundException(`Contracts of user "${ clientId }" not found`)
@@ -450,22 +467,23 @@ export class ContractsService {
       const paymentList = []
       
       // IMAGES MANAGE
+      let paymentAmount = 0
       for (let index = 0; index < lastContract.paymentList.length; index++) {
         const payment = lastContract.paymentList[index];
-
+        paymentAmount = paymentAmount + payment.amount
         const paymentPicture = await this.imageModel.findOne({ _id: payment.paymentPicture })
         payment.paymentPicture = paymentPicture ? paymentPicture : payment.paymentPicture
         lastContract.paymentList[index] = payment
-
         paymentList.push(payment)
       }
 
+      let movementAmount = 0
       for (let index = 0; index < lastContract.movementList.length; index++) {
         const movement = lastContract.movementList[index];
+        movementAmount = movementAmount + movement.amount
         const paymentPicture = await this.imageModel.findOne({ _id: movement.paymentPicture })
         movement.paymentPicture = paymentPicture ? paymentPicture : movement.paymentPicture
         lastContract.movementList[index] = movement
-
         movementList.push(movement)
       }
       // END 
@@ -605,6 +623,7 @@ export class ContractsService {
 
       if(havePayments) {
         paymentList?.forEach((payment) => {
+          // console.log("🚀 ~ file: contracts.service.ts:624 ~ ContractsService ~ paymentList?.forEach ~ payment:", payment)
           if(payment.status) {
             paidAmount += payment.amount
           } else {
@@ -642,6 +661,147 @@ export class ContractsService {
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
+  }
+
+  public recalculateLastContract = async (clientId: string) => {
+
+    const client = await this.userModel.findOne({ _id: clientId }).populate('createdBy')
+
+    if(!client) {
+      throw new BadRequestException(`Cliente incorrecto`)
+    }
+
+    const allContractsByUser = await this.contractModel
+        .find({ client: clientId })
+        .sort({ createdAt: 'asc' })
+        .populate('createdBy')
+        .populate('paymentList')
+        .populate('movementList')
+
+    const contractsByUser = allContractsByUser.filter((contract) => contract.status)
+
+    const now = dayjs.tz()
+    const lastContract = contractsByUser[0];
+    const paymentDays: any[] = [];
+
+    const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+
+    const { paymentList, movementList, paymentAmount, payments, nonWorkingDays } = lastContract
+
+    let paymentsIndex = 0
+    while (paymentDays.length < payments) {
+      const date = contractInitDate.add(paymentsIndex, 'day')
+      const day = date.day()
+      const parsedDay = this.parseDay(day)
+      const isSameContractDate = date.isSame(contractInitDate)
+      const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+
+      if(isPayDay) {
+        paymentDays.push(date)
+      }
+
+      paymentsIndex++
+    }
+    
+    const paymentsToDelete = paymentList.map((pay) => pay.id)
+
+    // How much client payed
+    const payed = movementList.reduce((amount, movement) => amount + movement.amount, 0)
+    const newPayments = []
+
+    let paymentNumber = 1
+    for (let index = 0; index < movementList.length; index++) {
+      const movement = movementList[index];
+
+      const contractExist = await this.contractModel
+        .findOne({ _id: movement.contract })
+
+      if(!contractExist) {
+        throw new BadRequestException(`No es posible encontrar el contrato"`)
+      }
+
+      let movementPaymentAmount = movement.amount
+      
+      while(movementPaymentAmount > 0) {
+        
+        let payed = 0
+
+        const lastPayment = newPayments.length ? newPayments[newPayments.length - 1] : null
+        const lastNumber = lastPayment ? lastPayment.paymentNumber : null
+        
+        if(lastPayment) {
+          const lastNumberTotalPayed = newPayments
+            .filter((payment) => payment.paymentNumber === lastNumber)
+            .reduce((amount, payment) => amount + payment.amount, 0)
+
+          if(lastNumberTotalPayed < paymentAmount) {
+            const debt = paymentAmount - lastNumberTotalPayed
+            if(movementPaymentAmount >= debt) {
+              payed = debt              
+            } else {
+              payed = movementPaymentAmount
+            }
+            paymentNumber--
+          }
+        }
+
+        if(payed === 0) {
+          payed = movementPaymentAmount < paymentAmount ? movementPaymentAmount : paymentAmount
+        }
+
+
+        newPayments.push({
+          createdBy: movement.createdBy,
+          status: movement.status === 'validated' ? true : false,
+          client: contractExist.client,
+          contract: movement.contract,
+          movement: movement.id,
+          amount: payed,
+          paymentNumber: paymentNumber,
+          paymentDate: dayjs(paymentDays[paymentNumber - 1]).tz().format('DD/MM/YYYY'),
+          paymentPicture: movement.paymentPicture,
+          createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+          updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        })
+
+        movementPaymentAmount -= payed
+        paymentNumber++
+      }
+    }
+
+    const totalPayed = newPayments.reduce((amount, payment) => amount + payment.amount, 0)
+
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ totalPayed:", totalPayed)
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ payed:", payed)
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments.length:", newPayments.length)
+    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ movementList:", movementList)
+    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments:", newPayments)
+    
+    if(payed === totalPayed) {
+      try {
+        for (let index = 0; index < paymentsToDelete.length; index++) {
+          const paymentId = paymentsToDelete[index];
+          await this.paymentModel.deleteOne({ _id: paymentId })
+          lastContract.paymentList = []
+          await lastContract.save()
+        }
+
+        for (let index = 0; index < newPayments.length; index++) {
+          const payment = newPayments[index];
+          const created = await this.paymentModel.create(payment)
+          lastContract.paymentList.push(created)
+          await lastContract.save()
+          // console.log("🚀 ~ file: contracts.service.ts:793 ~ ContractsService ~ recalculateLastContract= ~ created:", created)
+        }
+      } catch (error) {
+        console.log("🚀 ~ file: contracts.service.ts:755 ~ ContractsService ~ recalculateLastContract= ~ error:", error)
+        throw new Error(error)
+      }
+    }
+    
+    return { data: 'ok' }
   }
 
   public findOne = async (search: string) => {

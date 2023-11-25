@@ -97,6 +97,18 @@ export class ContractsController {
   ) {
     return this.contractService.findLastContract(id)
   }
+  
+  @Get('/recalculate/user/:id')
+  @Auth()
+  @ApiResponse({ status: 200, description: 'Contract found', type: Contract })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  recalculateLastContract(
+    @Param('id') id: string
+  ) {
+    return this.contractService.recalculateLastContract(id)
+  }
 
   @Get(':search')
   @Auth()
