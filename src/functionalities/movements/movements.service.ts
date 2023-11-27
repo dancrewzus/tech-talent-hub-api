@@ -282,11 +282,16 @@ export class MovementsService {
       let amountToBeCollected = 0
       let amountContractsFromToday = 0
 
+      let regularContractsFromToday = 0
       let paymentsToBeCollected = 0
       let contractsFromToday = 0
       let paymentsCollected = 0
         
-      activeContracts.forEach((contract) => {
+      for (let i = 0; i < activeContracts.length; i++) {
+
+        const contract = activeContracts[i];
+
+        const contractsCount = await this.contractModel.find({ client: contract.client }).count()
 
         const contractInitDate = dayjs(contract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
         const paymentList = contract.paymentList || []
@@ -328,14 +333,18 @@ export class MovementsService {
 
         if(contractInitDate.format('DD/MM/YYYY') === today) {
           amountContractsFromToday += contract.loanAmount
-          contractsFromToday++
+          if(contractsCount === 1) {
+            contractsFromToday++
+          } else {
+            regularContractsFromToday++
+          }
         }
-
-      });
+      }
 
       return {
         movementsFromToday: { incomesMovementsFromToday, expensesMovementsFromToday },
         closed: haveFinalMovement,
+        regularContractsFromToday,
         amountContractsFromToday,
         paymentsToBeCollected,
         amountToBeCollected,
@@ -388,14 +397,14 @@ export class MovementsService {
   
   public pendingCount = async (userRequest: User) => {
 
-    const role = userRequest.role?.name
+    // const role = userRequest.role?.name
 
-    if(!role || !['root', 'admin'].includes(role)) {
-      this.handleErrors.handleExceptions({
-        code: 401,
-        message: 'No tienes permisos para realizar esta acción.'
-      })
-    }
+    // if(!role || !['root', 'admin'].includes(role)) {
+    //   this.handleErrors.handleExceptions({
+    //     code: 401,
+    //     message: 'No tienes permisos para realizar esta acción.'
+    //   })
+    // }
 
     try {
       const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
