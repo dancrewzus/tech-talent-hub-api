@@ -275,6 +275,11 @@ export class ContractsService {
       const today = dayjs.tz()
       const pendingArray: any = []
 
+      let totalIncomplete = 0 // Pagos por validar
+      let totalPending = 0 // Pagos incompletos
+      let totalExpired = 0 // Pagos atrasados
+      let totalUnpaid = 0 // Pagos expirados
+
       // Nombre/ monto del contrato/ lo que le falta/valor parcela/ parcela  atrasado/parcela  pagas/parcelas faltantes
 
       for (let index = 0; index < contracts.length; index++) {
@@ -294,6 +299,7 @@ export class ContractsService {
         let daysExpired = 0
 
         let todayIncompletePayed = false
+        let beforePendingPayment = false
         let todayPendingPayment = false
         let todayNotPayed = false
 
@@ -345,6 +351,9 @@ export class ContractsService {
                 let sum = 0
                 paymentsFromBefore.forEach((payment) => {
                   sum += payment.amount
+                  if(!payment.status) {
+                    beforePendingPayment = true
+                  }
                 });
                 if(sum < paymentAmount) {
                   daysIncomplete++
@@ -366,7 +375,13 @@ export class ContractsService {
           daysExpired = today.diff(contractEndDate, 'days')
         }
         
-        if(todayNotPayed || todayIncompletePayed || todayPendingPayment || daysExpired > 0) {
+        if(
+          todayNotPayed || 
+          todayIncompletePayed || 
+          todayPendingPayment || 
+          beforePendingPayment || 
+          daysExpired > 0
+        ) {
 
           const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
 
@@ -381,6 +396,22 @@ export class ContractsService {
           if(todayIncompletePayed) { 
             icon = 'alert-triangle'
             color = 'orange'
+          }
+
+          if(daysLate > 0) {
+            totalUnpaid += 1
+          }
+
+          if(daysIncomplete > 0) {
+            totalIncomplete += 1
+          }
+
+          if(daysExpired > 0) {
+            totalExpired += 1
+          }
+
+          if(todayPendingPayment || beforePendingPayment) {
+            totalPending += 1
           }
 
           pendingArray.push({
@@ -405,7 +436,13 @@ export class ContractsService {
       }
       
       return {
-        data: pendingArray
+        data: {
+          pendingArray,
+          totalIncomplete,
+          totalPending,
+          totalExpired,
+          totalUnpaid,
+        }
       }
       
     } catch (error) {
