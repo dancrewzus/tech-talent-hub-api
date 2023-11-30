@@ -33,6 +33,15 @@ export class UsersController {
     return this.usersService.create(createUserDto, user);
   }
 
+  @Post('reset-password')
+  @ApiResponse({ status: 200, description: 'Password changed.' })
+  @ApiResponse({ status: 400, description: 'Bad request. CPF or password not satisfied some conditions.' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials. CPF or password are invalid.' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  resetPassword(@Body() data: any) {
+    return this.usersService.resetPassword(data.id)
+  }
+
   @Get()
   @Auth()
   @ApiResponse({ status: 200, description: 'Users found', type: User })

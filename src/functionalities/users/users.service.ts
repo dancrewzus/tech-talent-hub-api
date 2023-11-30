@@ -360,6 +360,26 @@ export class UsersService {
     }
   }
 
+  public resetPassword = async (id: string) => {
+    try {
+      const user = await this.userModel.findById(id)
+      if(!user) {
+        throw new NotFoundException(`User not found`)
+      }
+      await this.userModel.updateOne(
+        { _id: user.id },
+        { 
+          password: bcrypt.hashSync(`${ user.cpf.toLowerCase().trim() }`, 10),
+          isLogged: false,
+        });
+
+
+      return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  } 
+
   public remove = async (id: string) => {
     try {
       const { deletedCount } = await this.userModel.deleteOne({ _id: id })

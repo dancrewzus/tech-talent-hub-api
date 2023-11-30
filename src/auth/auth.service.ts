@@ -108,6 +108,27 @@ export class AuthService {
     }
   }
 
+  public resetPassword = async (loginDto: LoginDto) => {
+    try {
+      const { cpf } = loginDto;
+      const user = await this.userModel
+        .findOne({ cpf: cpf.toLowerCase().trim() })
+      if(!user) {
+        throw new UnauthorizedException('Invalid credentials')
+      }
+      if(!user.isActive) {
+        throw new UnauthorizedException('Inactive user')
+      }
+      await this.userModel.updateOne(
+        { _id: user.id },
+        { password: bcrypt.hashSync(`${ cpf }`, 10) });
+
+      return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  } 
+
   public changePassword = async (loginDto: LoginDto) => {
     try {
       const { password, cpf } = loginDto;

@@ -46,6 +46,15 @@ export class AuthController {
   changePassword(@Body() passwordDto: PasswordDto) {
     return this.authService.changePassword(passwordDto)
   }
+  
+  @Post('reset-password')
+  @ApiResponse({ status: 200, description: 'Password changed.', type: LoginResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request. CPF or password not satisfied some conditions.', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials. CPF or password are invalid.', type: ErrorResponseDto })
+  @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
+  resetPassword(@Body() passwordDto: PasswordDto) {
+    return this.authService.resetPassword(passwordDto)
+  }
 
   @Get('check-status')
   @Auth()
