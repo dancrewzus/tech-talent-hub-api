@@ -425,9 +425,6 @@ export class ContractsService {
             totalAhead += 1
           }
           
-          console.log("🚀 ~ file: contracts.service.ts:412 ~ ContractsService ~ findPendingPayments= ~ icon:", icon)
-          console.log("🚀 ~ file: contracts.service.ts:413 ~ ContractsService ~ findPendingPayments= ~ color:", color)
-          
           if(daysIncomplete > 0) {
             totalIncomplete += 1
           }
