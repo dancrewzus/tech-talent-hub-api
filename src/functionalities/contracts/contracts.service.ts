@@ -36,9 +36,9 @@ export class ContractsService {
 
   private defaultLimit: number;
   private ColorConstants: any = {
-    NOT_PAY_DAY: '#151515',
+    NOT_PAY_DAY: '#FFFFFF',
     CLIENT_RECEIVE_PAY: '#2167CA',
-    PAY_DAY: '#FFFFFF',
+    PAY_DAY: '#686868',
     NOT_PAYED: '#FF0000',
     PENDING: '#FFD900',
     PAYED: '#22FF00',
@@ -287,29 +287,21 @@ export class ContractsService {
 
         const contract = contracts[index];
 
-        const { paymentList, client, payments, createdAt, nonWorkingDays, paymentAmount, status } = contract
-        
-        if(!status) {
-          break;
-        }
+        const { paymentList, client, payments, createdAt, nonWorkingDays, paymentAmount } = contract
 
         const contractInitDate = dayjs(createdAt, 'DD/MM/YYYY HH:mm:ss').tz() //.format('DD/MM/YYYY HH:mm:ss')
         const havePayments = paymentList.length ? true : false
         const paymentDays: any[] = [];
+        const aheadPayments: any[] = []
   
+        let payed = 0
         let daysLate = 0
         let daysPayed = 0
         let daysAhead = 0
         let daysExpired = 0
+        let daysPending = 0
         let daysIncomplete = 0
         let indexPayments = 0
-        let payed = 0
-
-        let todayIncompletePayed = false
-        let beforePendingPayment = false
-        let aheadPendingPayment = false
-        let todayPendingPayment = false
-        let todayNotPayed = false
 
         if(havePayments) {
           paymentList.forEach((payment) => {
@@ -335,14 +327,9 @@ export class ContractsService {
             
             if(isAhead) {
               const paymentsFromAhead = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
-              if (paymentsFromAhead.length) {
-                paymentsFromAhead.forEach((payment) => {
-                  if(payment.status) {
-                    aheadPendingPayment = true
-                  }
-                  daysAhead++
-                });
-              }
+              paymentsFromAhead.forEach((payment) => {
+                aheadPayments.push(payment)
+              });
             }
             
             if(isToday) {
@@ -352,16 +339,15 @@ export class ContractsService {
                 paymentsFromToday.forEach((payment) => {
                   sum += payment.amount
                   if(!payment.status) {
-                    todayPendingPayment = true
-                    todayNotPayed = true
+                    daysPending++
                   }
                 });
                 if(sum < paymentAmount) {
-                  todayIncompletePayed = true
                   daysIncomplete++
+                } else {
+                  daysPayed++
                 }
               } else {
-                todayNotPayed = true
                 daysLate++
               }
             }
@@ -373,7 +359,7 @@ export class ContractsService {
                 paymentsFromBefore.forEach((payment) => {
                   sum += payment.amount
                   if(!payment.status) {
-                    beforePendingPayment = true
+                    daysPending++
                   }
                 });
                 if(sum < paymentAmount) {
@@ -389,6 +375,16 @@ export class ContractsService {
           indexPayments++
         }
 
+        // Dias anticipados
+        if(aheadPayments.length) {
+          const lastPayment = aheadPayments[aheadPayments.length - 1]
+          const createdAt = dayjs(lastPayment.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+          const isPayedBefore = createdAt.isBefore(today, 'date')
+          if(lastPayment.status && isPayedBefore) {
+            daysAhead++
+          }
+        }
+
         // Dias expirados
         const pendingAmount = contract.totalAmount - payed
         const contractEndDate = paymentDays[paymentDays.length - 1]
@@ -397,51 +393,46 @@ export class ContractsService {
         }
         
         if(
-          todayNotPayed || 
-          todayIncompletePayed || 
-          todayPendingPayment || 
-          beforePendingPayment || 
-          aheadPendingPayment ||
-          daysExpired > 0
+          daysIncomplete > 0 || 
+          daysPending > 0 || 
+          daysExpired > 0 ||
+          daysAhead > 0 ||
+          daysLate > 0
         ) {
-
+          
           const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
 
           let icon = '' 
           let color = '' 
           
-          if(todayNotPayed) {
-            icon = 'x-circle'
-            color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
-          }
-          
-          if(todayIncompletePayed) { 
-            icon = 'alert-triangle'
-            color = ''
-          }
-          
-          if(aheadPendingPayment) { 
-            icon = 'check'
-            color = 'green'
-          }
-
           if(daysLate > 0) {
+            icon = daysIncomplete > 0 ? 'alert-triangle' : 'x-circle'
+            color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
             totalUnpaid += 1
-          }
-
-          if(daysIncomplete > 0) {
-            totalIncomplete += 1
+          } else {
+            
           }
 
           if(daysExpired > 0) {
+            icon = 'x-circle'
+            color = 'red'
             totalExpired += 1
           }
           
           if(daysAhead > 0) {
+            icon = 'check'
+            color = 'green'
             totalAhead += 1
           }
+          
+          console.log("🚀 ~ file: contracts.service.ts:412 ~ ContractsService ~ findPendingPayments= ~ icon:", icon)
+          console.log("🚀 ~ file: contracts.service.ts:413 ~ ContractsService ~ findPendingPayments= ~ color:", color)
+          
+          if(daysIncomplete > 0) {
+            totalIncomplete += 1
+          }
 
-          if(todayPendingPayment || beforePendingPayment) {
+          if(daysPending > 0) {
             totalPending += 1
           }
 
@@ -457,7 +448,6 @@ export class ContractsService {
               upToDate: daysPayed, // Parcelas al día
               incomplete: daysIncomplete, // Parcelas restantes
               remaining: payments - daysPayed, // Parcelas restantes
-              todayPendingPayment, // Pagos sin validar
               daysExpired,
               icon,
               color,
