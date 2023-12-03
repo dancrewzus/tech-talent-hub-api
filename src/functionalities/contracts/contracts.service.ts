@@ -412,12 +412,12 @@ export class ContractsService {
           
           if(todayNotPayed) {
             icon = 'x-circle'
-            color = daysLate <= 1 ? 'white' : (daysLate === 2 ? 'yellow' : 'red')
+            color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
           }
           
           if(todayIncompletePayed) { 
             icon = 'alert-triangle'
-            color = 'orange'
+            color = ''
           }
           
           if(aheadPendingPayment) { 
