@@ -239,6 +239,7 @@ export class ContractsService {
         status: 'validated',
         validatedBy: userRequest.id,
         amount: contract.loanAmount,
+        contract: contract.id,
         type: 'out',
         description: `[Nuevo contrato]: ${ this.capitalizeFirstLetter(clientExist.firstName) } ${ this.capitalizeFirstLetter(clientExist.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
@@ -409,8 +410,6 @@ export class ContractsService {
             icon = daysIncomplete > 0 ? 'alert-triangle' : 'x-circle'
             color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
             totalUnpaid += 1
-          } else {
-            
           }
 
           if(daysExpired > 0) {
@@ -426,6 +425,7 @@ export class ContractsService {
           }
           
           if(daysIncomplete > 0) {
+            icon = 'alert-triangle'
             totalIncomplete += 1
           }
 

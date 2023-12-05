@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { GeolocationSchema, Geolocation } from '../movements/entities/location.entity';
 import { Image, ImageSchema } from '../images/entities/image.entity';
 import { User, UserSchema } from './entities/user.entity';
 import { CommonModule } from '../../common/common.module';
@@ -22,6 +23,10 @@ import { UsersService } from './users.service';
       {
         name: User.name,
         schema: UserSchema
+      },
+      {
+        name: Geolocation.name,
+        schema: GeolocationSchema
       },
       {
         name: Image.name,

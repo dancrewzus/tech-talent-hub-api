@@ -96,6 +96,9 @@ export class User extends Document {
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
   @Prop({ type: String, required: true })
   updatedAt?: string;
+  
+  @Prop({ type: Object, required: false })
+  geolocation?: any;
 }
 
 export const UserSchema = SchemaFactory.createForClass( User )

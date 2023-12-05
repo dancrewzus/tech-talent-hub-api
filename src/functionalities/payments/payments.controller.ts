@@ -6,7 +6,6 @@ import { User } from 'src/functionalities/users/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
-import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentsService } from './payments.service';
 
@@ -24,10 +23,10 @@ export class PaymentsController {
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   create(
-    @Body() createPaymentDto: CreatePaymentDto[],
+    @Body() data: any,
     @GetUser() user: User
   ) {
-    return this.paymentsService.create(createPaymentDto, user);
+    return this.paymentsService.create(data, user);
   }
 
   @Get()

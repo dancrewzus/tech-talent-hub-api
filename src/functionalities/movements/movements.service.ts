@@ -25,14 +25,14 @@ import { Contract } from 'src/functionalities/contracts/entities/contracts.entit
 import { User } from 'src/functionalities/users/entities/user.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 import { ContractsService } from '../contracts/contracts.service';
+import { CloudAdapter } from 'src/common/adapters/cloud.adapter';
+import { PaymentsService } from '../payments/payments.service';
 import { CreateMovementDto } from './dto/create-movement.dto';
-import { UpdateMovementDto } from './dto/update-movement.dto';
 import { Payment } from '../payments/entities/payment.entity';
+import { Geolocation } from './entities/location.entity';
 import { Image } from '../images/entities/image.entity';
 import { Movement } from './entities/movement.entity';
 import { Role } from '../roles/entities/role.entity';
-import { PaymentsService } from '../payments/payments.service';
-import { CloudAdapter } from 'src/common/adapters/cloud.adapter';
 
 @Injectable()
 export class MovementsService {
@@ -79,6 +79,7 @@ export class MovementsService {
   }
 
   constructor(
+    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
@@ -221,6 +222,7 @@ export class MovementsService {
       const comments = []
 
       let haveFinalMovement = false
+      let movementsCollected = 0
       let expensesAmount = 0
       let incomesAmount = 0
       let beforeAmount = 0
@@ -240,15 +242,17 @@ export class MovementsService {
             break;
           
           case 'in':
-            if(!isFromToday) beforeAmount += movement.amount
-            else {
-              todayAmount += movement.amount
-              incomesMovementsFromToday.push(this.formatReturnMovementData(movement))
-
-              if(!movement.description.includes('[Abono]: ')) {
-                incomesAmount += movement.amount  
-              } else {
-                amountCollected += movement.amount  
+            if(movement.status === 'validated') {
+              if(!isFromToday) beforeAmount += movement.amount
+              else {
+                todayAmount += movement.amount
+                incomesMovementsFromToday.push(this.formatReturnMovementData(movement))
+  
+                if(!movement.description.includes('[Abono]: ')) {
+                  incomesAmount += movement.amount  
+                } else {
+                  amountCollected += movement.amount  
+                }
               }
             }
             break;
@@ -290,10 +294,12 @@ export class MovementsService {
       for (let i = 0; i < activeContracts.length; i++) {
 
         const contract = activeContracts[i];
-
         const contractsCount = await this.contractModel.find({ client: contract.client }).count()
-
         const contractInitDate = dayjs(contract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+
+        const movementList = contract.movementList.filter((movement) => movement.movementDate === today && movement.description.includes('[Abono]') && movement.status === 'validated') || []
+        movementsCollected += movementList.length
+        
         const paymentList = contract.paymentList || []
         const totalPayments = contract.payments || 0
         const daysOff = contract.nonWorkingDays || ''
@@ -319,7 +325,7 @@ export class MovementsService {
               amountToBeCollected += amount
               paymentsToBeCollected++
               
-              const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today) : null
+              const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today && payment.status) : null
               
               if(havePaymentsByDate && havePaymentsByDate.length) {
                 paymentsCollected++
@@ -348,6 +354,7 @@ export class MovementsService {
         amountContractsFromToday,
         paymentsToBeCollected,
         amountToBeCollected,
+        movementsCollected,
         contractsFromToday,
         paymentsCollected,
         amountCollected,
@@ -489,116 +496,119 @@ export class MovementsService {
        */
       if(amount !== movement.amount) {
 
-        // Crea una copia del movimiento
-        const movementForDelete = JSON.parse(JSON.stringify(movement))
-        
-        // Obtiene el contrato para editar junto con el movimiento
-        const contractToEdit = await this.contractModel.findById(movementForDelete.contract)
-          .populate('client')
-          .populate('paymentList')
-          .populate('movementList')
-
-        if(!contractToEdit) {
-          throw new NotFoundException(`Contrato no encontrado`)
-        }
-
-        // Edita el contrato y elimina los pagos y el movimiento
-        await this.deleteMovementsAndPayments({ contract: contractToEdit, movement })
-        
         /**
-         * A partir de acá comienza el nuevo cálculo del movimiento y pagos
-        */
-
-        const paymentPicture = await this.imageModel.findById(movementForDelete.paymentPicture._id)
-        const paymentClientAmount = amount
-        /**
-         * Código obtenido desde la API de contratos
+         * TEMPORALMENTE DESHABILITADO!!!
          */
+        // // Crea una copia del movimiento
+        // const movementForDelete = JSON.parse(JSON.stringify(movement))
         
-        const lastContractData = await this.contractsService.findLastContract(contractToEdit.client.id)
+        // // Obtiene el contrato para editar junto con el movimiento
+        // const contractToEdit = await this.contractModel.findById(movementForDelete.contract)
+        //   .populate('client')
+        //   .populate('paymentList')
+        //   .populate('movementList')
 
-        const { lastContract, paymentIncompleteDays, paymentDays, patchValue } = lastContractData.data
-        const { paymentClientNumber } = patchValue
+        // if(!contractToEdit) {
+        //   throw new NotFoundException(`Contrato no encontrado`)
+        // }
 
-        /**
-         * Código obtenido desde el frontend de detalle de contratos
-         */
-        const groupByDate = []
-        lastContract.paymentList.forEach((pay) => {
-          const payment = JSON.parse(JSON.stringify(pay))
-          const index = groupByDate.findIndex((pay) => pay.paymentDate === payment.paymentDate)
-          if(index === -1) {
-            groupByDate.push(payment)
-          } else {
-            const groupedPayment = groupByDate[index]
-            groupedPayment.amount = groupedPayment.amount + payment.amount
-            groupedPayment.status = !groupedPayment.status ? !groupedPayment.status : payment.status
-            groupByDate[index] = groupedPayment
-          }
-        })
+        // // Edita el contrato y elimina los pagos y el movimiento
+        // await this.deleteMovementsAndPayments({ contract: contractToEdit, movement })
+        
+        // /**
+        //  * A partir de acá comienza el nuevo cálculo del movimiento y pagos
+        // */
 
-        let pendingAmount = 0
-        groupByDate.forEach((payment) => {
-          pendingAmount += (amount - payment.amount)
-        });
+        // const paymentPicture = await this.imageModel.findById(movementForDelete.paymentPicture._id)
+        // const paymentClientAmount = amount
+        // /**
+        //  * Código obtenido desde la API de contratos
+        //  */
+        
+        // const lastContractData = await this.contractsService.findLastContract(contractToEdit.client.id)
 
-        const paymentsToStore: any[] = []
-        if(paymentClientAmount > lastContract.paymentAmount || (pendingAmount > 0 && paymentClientAmount > pendingAmount)) {
+        // const { lastContract, paymentIncompleteDays, paymentDays, patchValue } = lastContractData.data
+        // const { paymentClientNumber } = patchValue
 
-          const incompleteDays = paymentIncompleteDays?.length || 0
+        // /**
+        //  * Código obtenido desde el frontend de detalle de contratos
+        //  */
+        // const groupByDate = []
+        // lastContract.paymentList.forEach((pay) => {
+        //   const payment = JSON.parse(JSON.stringify(pay))
+        //   const index = groupByDate.findIndex((pay) => pay.paymentDate === payment.paymentDate)
+        //   if(index === -1) {
+        //     groupByDate.push(payment)
+        //   } else {
+        //     const groupedPayment = groupByDate[index]
+        //     groupedPayment.amount = groupedPayment.amount + payment.amount
+        //     groupedPayment.status = !groupedPayment.status ? !groupedPayment.status : payment.status
+        //     groupByDate[index] = groupedPayment
+        //   }
+        // })
 
-          let paymentAmount = paymentClientAmount
-          let index = 0
+        // let pendingAmount = 0
+        // groupByDate.forEach((payment) => {
+        //   pendingAmount += (amount - payment.amount)
+        // });
 
-          while(paymentAmount > 0) {
-            let payed = 0
-            const paymentDay = dayjs(paymentDays[(paymentClientNumber - 1) + index]).tz().format('DD/MM/YYYY')
-            if(incompleteDays) {
-              const exist = paymentIncompleteDays.includes(paymentDay)
-              if(!exist) {
-                payed = paymentAmount < amount ? paymentAmount : amount
-              } else {
-                let value = 0
-                const payments = groupByDate.filter((payment) => payment.paymentDate === paymentDay)
-                payments.forEach((el) => {
-                  value += el.amount
-                })
-                payed = amount - value
-              }
-            } else {
-              payed = paymentAmount < amount ? paymentAmount : amount
-            }
-            const payment = {
-              client: lastContract.client,
-              contract: lastContract.id,
-              paymentDate: paymentDay,
-              paymentNumber: paymentClientNumber + index,
-              amount: `${ payed }`,
-              paymentPicture: paymentPicture._id,
-            }
+        // const paymentsToStore: any[] = []
+        // if(paymentClientAmount > lastContract.paymentAmount || (pendingAmount > 0 && paymentClientAmount > pendingAmount)) {
 
-            paymentsToStore.push(payment)
+        //   const incompleteDays = paymentIncompleteDays?.length || 0
 
-            paymentAmount = paymentAmount - payed
-            index++
-          }
-        } else {
-          const paymentDay = dayjs(paymentDays[data.paymentClientNumber - 1])
-          paymentsToStore.push({
-            client: lastContract.client,
-            contract: lastContract.id,
-            paymentDate: paymentDay.format('DD/MM/YYYY'),
-            paymentNumber: paymentClientNumber,
-            amount: paymentClientAmount,
-            paymentPicture: paymentPicture._id,
-          })
-        }
+        //   let paymentAmount = paymentClientAmount
+        //   let index = 0
 
-        /**
-         * Graba los pagos calculados y el movimiento
-         */
+        //   while(paymentAmount > 0) {
+        //     let payed = 0
+        //     const paymentDay = dayjs(paymentDays[(paymentClientNumber - 1) + index]).tz().format('DD/MM/YYYY')
+        //     if(incompleteDays) {
+        //       const exist = paymentIncompleteDays.includes(paymentDay)
+        //       if(!exist) {
+        //         payed = paymentAmount < amount ? paymentAmount : amount
+        //       } else {
+        //         let value = 0
+        //         const payments = groupByDate.filter((payment) => payment.paymentDate === paymentDay)
+        //         payments.forEach((el) => {
+        //           value += el.amount
+        //         })
+        //         payed = amount - value
+        //       }
+        //     } else {
+        //       payed = paymentAmount < amount ? paymentAmount : amount
+        //     }
+        //     const payment = {
+        //       client: lastContract.client,
+        //       contract: lastContract.id,
+        //       paymentDate: paymentDay,
+        //       paymentNumber: paymentClientNumber + index,
+        //       amount: `${ payed }`,
+        //       paymentPicture: paymentPicture._id,
+        //     }
 
-        await this.paymentsService.create(paymentsToStore, userRequest)
+        //     paymentsToStore.push(payment)
+
+        //     paymentAmount = paymentAmount - payed
+        //     index++
+        //   }
+        // } else {
+        //   const paymentDay = dayjs(paymentDays[data.paymentClientNumber - 1])
+        //   paymentsToStore.push({
+        //     client: lastContract.client,
+        //     contract: lastContract.id,
+        //     paymentDate: paymentDay.format('DD/MM/YYYY'),
+        //     paymentNumber: paymentClientNumber,
+        //     amount: paymentClientAmount,
+        //     paymentPicture: paymentPicture._id,
+        //   })
+        // }
+
+        // /**
+        //  * Graba los pagos calculados y el movimiento
+        //  */
+
+        // await this.paymentsService.create(paymentsToStore, userRequest)
 
       } else {
         

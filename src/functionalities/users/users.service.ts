@@ -22,6 +22,7 @@ dayjs.tz.setDefault('America/Manaus')
 
 // END DATE MANAGEMENT
 
+import { Geolocation } from '../movements/entities/location.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 // import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Image } from '../images/entities/image.entity';
@@ -35,6 +36,7 @@ export class UsersService {
   private defaultLimit: number;
 
   constructor(
+    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
     @InjectModel(Image.name) private readonly imageModel: Model<Image>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
@@ -87,6 +89,7 @@ export class UsersService {
       phoneNumber: user.phoneNumber || '',
       role: user.role?.name || '',
       gender: user.gender || '',
+      geolocation: user.geolocation || {},
       createdBy: user.createdBy ? this.formatReturnData(user.createdBy) : null,
     }
   }
@@ -279,6 +282,25 @@ export class UsersService {
         .populate('createdBy')
         .populate('profilePicture')
         .populate('addressPicture')
+
+      if(clients.length) {
+        for (let index = 0; index < clients.length; index++) {
+          const client = clients[index];
+          const locations = await this.locationModel.find({ client: client._id })
+          if(locations.length) {
+            const clientLastLocation = locations[0]
+            client.geolocation = {
+              latitude: clientLastLocation.latitude,
+              longitude: clientLastLocation.longitude
+            }
+          } else {
+            client.geolocation = {
+              latitude: 0,
+              longitude: 0
+            }
+          }
+        }
+      }
 
       return {
         data: clients.map((user) => this.formatReturnData(user)),

@@ -24,9 +24,9 @@ dayjs.tz.setDefault('America/Manaus')
 
 import { Contract } from 'src/functionalities/contracts/entities/contracts.entity';
 import { User } from 'src/functionalities/users/entities/user.entity';
+import { Geolocation } from '../movements/entities/location.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 import { Movement } from '../movements/entities/movement.entity';
-import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Image } from '../images/entities/image.entity';
 import { Payment } from './entities/payment.entity';
@@ -41,6 +41,7 @@ export class PaymentsService {
   }
 
   constructor(
+    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
     @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
     @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
@@ -52,9 +53,11 @@ export class PaymentsService {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
 
-  public create = async (createPaymentsDto: CreatePaymentDto[], userRequest: User) => {
+  public create = async (data: any, userRequest: User) => {
     try {
 
+      const { payments, geolocation } = data
+      const createPaymentsDto = payments
       const now = dayjs.tz()
       const haveFinal = await this.movementModel.findOne({ type: 'final', movementDate: now.format('DD/MM/YYYY'), createdBy: userRequest.id })
 
@@ -130,6 +133,17 @@ export class PaymentsService {
         type: 'in',
         description: `[Abono]: ${ this.capitalizeFirstLetter(contractExist.client.firstName) } ${ this.capitalizeFirstLetter(contractExist.client.paternalSurname) }`,
         movementDate: now.format('DD/MM/YYYY'),
+        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
+      })
+
+      await this.locationModel.create({
+        createdBy: userRequest.id,
+        client: clientId,
+        contract: contractExist._id,
+        movement: movement.id,
+        latitude: geolocation?.latitude || 0,
+        longitude: geolocation?.longitude || 0,
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       })

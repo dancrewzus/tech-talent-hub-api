@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { Contract, ContractSchema } from 'src/functionalities/contracts/entities/contracts.entity';
+import { GeolocationSchema, Geolocation } from '../movements/entities/location.entity';
 import { User, UserSchema } from 'src/functionalities/users/entities/user.entity';
 import { Movement, MovementSchema } from '../movements/entities/movement.entity';
 import { Image, ImageSchema } from '../images/entities/image.entity';
@@ -23,6 +24,10 @@ import { AuthModule } from 'src/auth/auth.module';
       {
         name: Movement.name,
         schema: MovementSchema
+      },
+      {
+        name: Geolocation.name,
+        schema: GeolocationSchema
       },
       {
         name: Payment.name,
