@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpCode } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 
 import { User } from 'src/functionalities/users/entities/user.entity';
@@ -6,7 +6,7 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
 import { CreateMovementDto } from './dto/create-movement.dto';
-import { UpdateMovementDto } from './dto/update-movement.dto';
+// import { UpdateMovementDto } from './dto/update-movement.dto';
 import { MovementsService } from './movements.service';
 import { Movement } from './entities/movement.entity';
 
@@ -128,9 +128,9 @@ export class MovementsController {
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   pendingCount(
-    @GetUser() user: User
+    // @GetUser() user: User
   ) {
-    return this.movementsService.pendingCount(user);
+    return this.movementsService.pendingCount(/* user */);
   }
 
   // @Get(':id')

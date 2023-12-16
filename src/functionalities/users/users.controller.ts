@@ -68,6 +68,16 @@ export class UsersController {
     return this.usersService.findClients(paginationDto, user);
   }
 
+  @Get('assign-points')
+  assignPoints() {
+    return this.usersService.assignInitPoints();
+  }
+  
+  @Get('delete-selected-clients')
+  clearUsers() {
+    return this.usersService.clearUsers();
+  }
+
   @Get(':search')
   @Auth()
   findOne(@Param('search') search: string) {

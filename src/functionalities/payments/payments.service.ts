@@ -72,13 +72,15 @@ export class PaymentsService {
 
       const clientId = new BSON.ObjectId( client )
       const contractExist = await this.contractModel
-        .findOne({ _id: contract })
+        .findOne({ _id: contract, status: true })
         .populate('client')
         .populate('paymentList')
         .populate('movementList')
+      
+      const clientExist = await this.userModel.findById(clientId)
 
-      if(!contractExist) {
-        throw new BadRequestException(`No es posible encontrar el contrato con ID "${ contract }"`)
+      if(!contractExist || !clientExist) {
+        throw new BadRequestException(`No es posible encontrar el contrato/cliente con ID "${ contract }"`)
       }
 
       if(!contractExist.client._id.equals(clientId)) {
@@ -114,11 +116,11 @@ export class PaymentsService {
           payments = payments + payment.amount
         }
 
-        if(payments === contractExist.totalAmount) {
+        if(!contractExist.isOutdated && payments === contractExist.totalAmount) {
           contractExist.status = false
+          clientExist.points = clientExist.points + 1
         }
 
-        await contractExist.save();
         totalAmount += Number.parseInt(`${ amount }`)
       }
 
@@ -157,8 +159,9 @@ export class PaymentsService {
 
       await movement.save();
 
-      contractExist.movementList.push(movement);
-      await contractExist.save();
+      contractExist.movementList.push(movement)
+      await contractExist.save()
+      await clientExist.save()
 
       return;
     } catch (error) {

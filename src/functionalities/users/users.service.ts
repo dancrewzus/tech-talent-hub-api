@@ -89,6 +89,7 @@ export class UsersService {
       phoneNumber: user.phoneNumber || '',
       role: user.role?.name || '',
       gender: user.gender || '',
+      points: user.points || 0,
       geolocation: user.geolocation || {},
       createdBy: user.createdBy ? this.formatReturnData(user.createdBy) : null,
     }
@@ -136,6 +137,7 @@ export class UsersService {
         cpf,
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        points: databaseRole.name === 'client' ? 2 : 0,
         ...data
       });
 
@@ -408,6 +410,54 @@ export class UsersService {
       if(deletedCount === 0)
         throw new NotFoundException(`User with id "${ id }" not found`)
       return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public assignInitPoints = async () => {
+    const databaseRole = await this.roleService.findOne('client' as string)
+    if(!databaseRole) {
+      throw new NotFoundException(`Role with name "client" not found`)
+    }
+    try {
+      const clients = await this.userModel.find({
+        role: databaseRole.id,
+        isActive: true
+      })
+
+      if(clients.length) {
+        for (let index = 0; index < clients.length; index++) {
+          const client = clients[index];
+          if(!client.points || client.points === 0) {
+            client.points = 2
+            await client.save()
+          }
+        }
+      }
+
+      return 'Points assigned'
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public clearUsers = async () => {
+    try {
+      const databaseRole = await this.roleService.findOne('client' as string)
+      const clients = await this.userModel.find({ role: databaseRole.id, isActive: true })
+      const validNames = ['natali', 'henato', 'jefferson']
+      if(clients.length) {
+        for (let index = 0; index < clients.length; index++) {
+          const client = clients[index];
+          const isValidClient = validNames.includes(client.firstName.toLowerCase())
+          if(!isValidClient) {
+            client.isActive = false
+            await client.save()
+          }
+        }
+      }
+      return 'User deleted'
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

@@ -99,6 +99,9 @@ export class User extends Document {
   
   @Prop({ type: Object, required: false })
   geolocation?: any;
+
+  @Prop({ type: Number, required: true })
+  points: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass( User )

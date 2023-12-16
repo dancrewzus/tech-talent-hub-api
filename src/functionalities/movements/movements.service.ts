@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -33,6 +33,7 @@ import { Geolocation } from './entities/location.entity';
 import { Image } from '../images/entities/image.entity';
 import { Movement } from './entities/movement.entity';
 import { Role } from '../roles/entities/role.entity';
+import { BSON } from 'mongodb';
 
 @Injectable()
 export class MovementsService {
@@ -402,7 +403,7 @@ export class MovementsService {
     }
   }
   
-  public pendingCount = async (userRequest: User) => {
+  public pendingCount = async (/* userRequest: User */) => {
 
     // const role = userRequest.role?.name
 
@@ -482,19 +483,126 @@ export class MovementsService {
       })
     }
 
-    const { id, amount } = data
+    const { id } = data
 
+    try {
+      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture').populate('contract')
+      if(!movement) {
+        throw new NotFoundException(`Payment with id "${ id }" not found`)
+      }
+
+      const { paymentList, contract } = movement
+
+      const contractExist = await this.contractModel
+        .findOne({ _id: contract._id, status: true })
+        .populate('client')
+        .populate('paymentList')
+
+      for (let index = 0; index < paymentList.length; index++) {
+        const payment = paymentList[index];
+        payment.status = true
+        await payment.save()
+      }
+      movement.status = 'validated'
+      await movement.save()
+
+      // Validate if contract is all payed
+
+      const clientId = new BSON.ObjectId( contractExist?.client?._id )
+      const clientExist = await this.userModel.findById(clientId)
+      console.log("🚀 ~ file: movements.service.ts:513 ~ MovementsService ~ validateMovement= ~ clientExist:", clientExist)
+
+      if(!contractExist || !clientExist) {
+        throw new BadRequestException(`Ha ocurrido un error al encontrar el contrato o cliente`)
+      }
+
+      let payments = 0
+      for(const payment of contractExist?.paymentList) {
+        payments = payments + payment.amount
+      }
+
+      if(!contractExist.isOutdated && payments === contractExist.totalAmount) {
+        contractExist.status = false
+        clientExist.points = clientExist.points + 1
+        await contractExist.save()
+        await clientExist.save()
+      }
+
+      return
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public cancelMovement= async (id: string, userRequest: User) => {
+    
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role) ) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
     try {
       const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture')
       if(!movement) {
         throw new NotFoundException(`Payment with id "${ id }" not found`)
       }
-      
-      /**
+      if(movement.contract) {
+        const contract = await this.contractModel.findById(movement.contract)
+          .populate('paymentList')
+          .populate('movementList')
+  
+        await this.deleteMovementsAndPayments({ contract, movement })
+      } else {
+        const { paymentPicture } = movement
+        await this.cloudAdapter.deleteResource(paymentPicture.publicId)
+
+        await paymentPicture.deleteOne()
+        await movement.deleteOne()
+      }
+      return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public deleteComment= async (id: string, userRequest: User) => {
+    
+    const role = userRequest.role?.name
+
+    if(!role || !['root', 'admin'].includes(role) ) {
+      this.handleErrors.handleExceptions({
+        code: 401,
+        message: 'No tienes permisos para realizar esta acción.'
+      })
+    }
+
+    try {
+      const movement = await this.movementModel.findById(id)
+      if(!movement) {
+        throw new NotFoundException(`Payment with id "${ id }" not found`)
+      }
+      movement.comment = ''
+      await movement.save()
+      return
+
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+}
+
+
+// IN VALIDATE MOVEMENT
+
+/**
        * ESTA CONDICIÓN APLICA PARA EDITAR EL MONTO DEL
        * MOVIMIENTO Y RECALCULAR TODOS LOS PAGOS
        */
-      if(amount !== movement.amount) {
+      // if(amount !== movement.amount) {
 
         /**
          * TEMPORALMENTE DESHABILITADO!!!
@@ -610,81 +718,15 @@ export class MovementsService {
 
         // await this.paymentsService.create(paymentsToStore, userRequest)
 
-      } else {
+      // } else {
         
-        const { paymentList } = movement
+      //   const { paymentList } = movement
 
-        for (let index = 0; index < paymentList.length; index++) {
-          const payment = paymentList[index];
-          payment.status = true
-          await payment.save()
-        }
-        movement.status = 'validated'
-        await movement.save()
-      }
-      return
-
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
-  }
-
-  public cancelMovement= async (id: string, userRequest: User) => {
-    
-    const role = userRequest.role?.name
-
-    if(!role || !['root', 'admin'].includes(role) ) {
-      this.handleErrors.handleExceptions({
-        code: 401,
-        message: 'No tienes permisos para realizar esta acción.'
-      })
-    }
-    try {
-      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture')
-      if(!movement) {
-        throw new NotFoundException(`Payment with id "${ id }" not found`)
-      }
-      if(movement.contract) {
-        const contract = await this.contractModel.findById(movement.contract)
-          .populate('paymentList')
-          .populate('movementList')
-  
-        await this.deleteMovementsAndPayments({ contract, movement })
-      } else {
-        const { paymentPicture } = movement
-        await this.cloudAdapter.deleteResource(paymentPicture.publicId)
-
-        await paymentPicture.deleteOne()
-        await movement.deleteOne()
-      }
-      return
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
-  }
-
-  public deleteComment= async (id: string, userRequest: User) => {
-    
-    const role = userRequest.role?.name
-
-    if(!role || !['root', 'admin'].includes(role) ) {
-      this.handleErrors.handleExceptions({
-        code: 401,
-        message: 'No tienes permisos para realizar esta acción.'
-      })
-    }
-
-    try {
-      const movement = await this.movementModel.findById(id)
-      if(!movement) {
-        throw new NotFoundException(`Payment with id "${ id }" not found`)
-      }
-      movement.comment = ''
-      await movement.save()
-      return
-
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
-  }
-}
+      //   for (let index = 0; index < paymentList.length; index++) {
+      //     const payment = paymentList[index];
+      //     payment.status = true
+      //     await payment.save()
+      //   }
+      //   movement.status = 'validated'
+      //   await movement.save()
+      // }

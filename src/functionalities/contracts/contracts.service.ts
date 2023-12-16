@@ -290,11 +290,8 @@ export class ContractsService {
 
         const { paymentList, client, payments, createdAt, nonWorkingDays, paymentAmount } = contract
 
-        const contractInitDate = dayjs(createdAt, 'DD/MM/YYYY HH:mm:ss').tz() //.format('DD/MM/YYYY HH:mm:ss')
-        const havePayments = paymentList.length ? true : false
-        const paymentDays: any[] = [];
-        const aheadPayments: any[] = []
-  
+        const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
+
         let payed = 0
         let daysLate = 0
         let daysPayed = 0
@@ -303,94 +300,101 @@ export class ContractsService {
         let daysPending = 0
         let daysIncomplete = 0
         let indexPayments = 0
-
-        if(havePayments) {
-          paymentList.forEach((payment) => {
-            payed += payment.amount
-          });
-        }
+        let pendingAmount = 0
         
-        while (paymentDays.length < payments) {
+        if(clientData.isActive) {
+
+          const contractInitDate = dayjs(createdAt, 'DD/MM/YYYY HH:mm:ss').tz() //.format('DD/MM/YYYY HH:mm:ss')
+          const havePayments = paymentList.length ? true : false
+          const paymentDays: any[] = [];
+          const aheadPayments: any[] = []
           
-          const date = contractInitDate.add(indexPayments, 'day')
-          const day = date.day()
-          const parsedDay = this.parseDay(day)
-          const isSameContractDate = date.isSame(contractInitDate)
-          const isBefore = date.isBefore(today, 'date')
-          const isToday = date.isSame(today, 'date')
-          const isAhead = date.isAfter(today, 'date')
-          const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+          if(havePayments) {
+            paymentList.forEach((payment) => {
+              payed += payment.amount
+            });
+          }
+          
+          while (paymentDays.length < payments) {
+            
+            const date = contractInitDate.add(indexPayments, 'day')
+            const day = date.day()
+            const parsedDay = this.parseDay(day)
+            const isSameContractDate = date.isSame(contractInitDate)
+            const isBefore = date.isBefore(today, 'date')
+            const isToday = date.isSame(today, 'date')
+            const isAhead = date.isAfter(today, 'date')
+            const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+    
+            // Es un día de pago
+            if(isPayDay) {
+              
+              paymentDays.push(date)
+              
+              if(isAhead) {
+                const paymentsFromAhead = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
+                paymentsFromAhead.forEach((payment) => {
+                  aheadPayments.push(payment)
+                });
+              }
+              
+              if(isToday) {
+                const paymentsFromToday = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today.format('DD/MM/YYYY')) : []
+                if (paymentsFromToday.length) {
+                  let sum = 0
+                  paymentsFromToday.forEach((payment) => {
+                    sum += payment.amount
+                    if(!payment.status) {
+                      daysPending++
+                    }
+                  });
+                  if(sum < paymentAmount) {
+                    daysIncomplete++
+                  } else {
+                    daysPayed++
+                  }
+                } else {
+                  daysLate++
+                }
+              }
   
-          // Es un día de pago
-          if(isPayDay) {
-            
-            paymentDays.push(date)
-            
-            if(isAhead) {
-              const paymentsFromAhead = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
-              paymentsFromAhead.forEach((payment) => {
-                aheadPayments.push(payment)
-              });
-            }
-            
-            if(isToday) {
-              const paymentsFromToday = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today.format('DD/MM/YYYY')) : []
-              if (paymentsFromToday.length) {
-                let sum = 0
-                paymentsFromToday.forEach((payment) => {
-                  sum += payment.amount
-                  if(!payment.status) {
-                    daysPending++
+              if(isBefore) {
+                const paymentsFromBefore = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
+                if (paymentsFromBefore.length) {
+                  let sum = 0
+                  paymentsFromBefore.forEach((payment) => {
+                    sum += payment.amount
+                    if(!payment.status) {
+                      daysPending++
+                    }
+                  });
+                  if(sum >= paymentAmount) {
+                    daysPayed++
                   }
-                });
-                if(sum < paymentAmount) {
-                  daysIncomplete++
                 } else {
-                  daysPayed++
+                  daysLate++
                 }
-              } else {
-                daysLate++
               }
             }
-
-            if(isBefore) {
-              const paymentsFromBefore = havePayments ? paymentList?.filter((payment) => payment.paymentDate === date.format('DD/MM/YYYY')) : []
-              if (paymentsFromBefore.length) {
-                let sum = 0
-                paymentsFromBefore.forEach((payment) => {
-                  sum += payment.amount
-                  if(!payment.status) {
-                    daysPending++
-                  }
-                });
-                if(sum < paymentAmount) {
-                  daysIncomplete++
-                } else {
-                  daysPayed++
-                }
-              } else {
-                daysLate++
-              }
+            indexPayments++
+          }
+  
+          // Dias anticipados
+          if(aheadPayments.length) {
+            const lastPayment = aheadPayments[aheadPayments.length - 1]
+            const createdAt = dayjs(lastPayment.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+            const isPayedBefore = createdAt.isBefore(today, 'date')
+            if(lastPayment.status && isPayedBefore) {
+              daysAhead++
             }
           }
-          indexPayments++
-        }
-
-        // Dias anticipados
-        if(aheadPayments.length) {
-          const lastPayment = aheadPayments[aheadPayments.length - 1]
-          const createdAt = dayjs(lastPayment.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
-          const isPayedBefore = createdAt.isBefore(today, 'date')
-          if(lastPayment.status && isPayedBefore) {
-            daysAhead++
+  
+          // Dias expirados
+          pendingAmount = contract.totalAmount - payed
+          const contractEndDate = paymentDays[paymentDays.length - 1]
+          if(contractEndDate.isBefore(today) && pendingAmount > 0) {
+            daysExpired = today.diff(contractEndDate, 'days')
           }
-        }
-
-        // Dias expirados
-        const pendingAmount = contract.totalAmount - payed
-        const contractEndDate = paymentDays[paymentDays.length - 1]
-        if(contractEndDate.isBefore(today) && pendingAmount > 0) {
-          daysExpired = today.diff(contractEndDate, 'days')
         }
         
         if(
@@ -400,9 +404,6 @@ export class ContractsService {
           daysAhead > 0 ||
           daysLate > 0
         ) {
-          
-          const clientData = await this.userModel.findOne({ _id: client }).populate('profilePicture').populate('addressPicture')
-
           let icon = '' 
           let color = '' 
           
@@ -477,6 +478,18 @@ export class ContractsService {
         throw new BadRequestException(`Cliente incorrecto`)
       }
 
+      if(!client.isActive) {
+        return {
+          data: {
+            haveActiveContracts: false,
+            patchValue: {
+              countContracts  : 0,
+              lastContractDate: null
+            }
+          }
+        }
+      }
+
       const contractsQuantity = await this.contractModel.count({ client: clientId })
 
       const allContractsByUser = await this.contractModel
@@ -494,14 +507,15 @@ export class ContractsService {
         const contract = activeContracts[index];
         const validatedMovements = contract.movementList.filter((movement) => movement.status === 'validated')
         const payed = validatedMovements.reduce((sum, mov) => sum + mov.amount, 0);
-        if(payed === contract.totalAmount) {
+        if(!contract.isOutdated && payed === contract.totalAmount) {
           contract.status = false
+          client.points = client.points + 1
           await contract.save()
+          await client.save()
         } else {
           contractsByUser.push(contract)
         }
       }
-      // console.log("🚀 ~ file: contracts.service.ts:433 ~ ContractsService ~ findLastContract= ~ contractsByUser:", contractsByUser)
 
       if(!contractsByUser.length) {
         // throw new NotFoundException(`Contracts of user "${ clientId }" not found`)
@@ -519,6 +533,7 @@ export class ContractsService {
       const today = dayjs.tz()
       const lastContract = contractsByUser[0];
 
+      const isOutdated = lastContract.isOutdated
       const movementList = [] 
       const paymentList = []
       
@@ -567,7 +582,7 @@ export class ContractsService {
       let daysExpired = 0
       let pending = 0
       let mustTodayPayed = 0
-      let payedAmount = 0
+      // let payedAmount = 0
       
       let index = 0
       while (paymentDays.length < totalPayments) {
@@ -606,7 +621,7 @@ export class ContractsService {
         if(havePaymentsByDate && havePaymentsByDate.length) {
           let sumPaymentByDate = 0
           havePaymentsByDate.forEach((payment) => { sumPaymentByDate = sumPaymentByDate + payment.amount });
-          payedAmount += sumPaymentByDate
+          // payedAmount += sumPaymentByDate
           if(sumPaymentByDate < amount) {
             color = this.ColorConstants.NOT_PAYED
             pending += (amount - sumPaymentByDate)
@@ -666,7 +681,15 @@ export class ContractsService {
       // Dias expirados
       if(contractEndDate.isBefore(today)) {
         daysExpired = today.diff(contractEndDate, 'days')
+        if(daysExpired > 0) {
+          if(!isOutdated) {
+            await this.contractModel.updateOne({ _id: lastContract._id }, { isOutdated: true })
+            client.points = client.points - 1
+            await client.save()
+          }
+        }
       }
+
 
       let paymentClientNumber = 0
       let paymentClientAmount = 0

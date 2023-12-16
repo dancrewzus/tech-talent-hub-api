@@ -64,6 +64,10 @@ export class Contract extends Document {
   @ApiProperty({ type: Boolean, description: 'Is active?', example: true })
   @Prop({ type: Boolean, default: true })
   status: boolean;
+  
+  @ApiProperty({ type: Boolean, description: 'Is outdated?', example: true })
+  @Prop({ type: Boolean, default: false })
+  isOutdated: boolean;
 
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY'), description: 'Last contract date.' })
   @Prop({ type: String, required: true })
