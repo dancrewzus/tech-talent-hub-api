@@ -295,56 +295,63 @@ export class MovementsService {
       for (let i = 0; i < activeContracts.length; i++) {
 
         const contract = activeContracts[i];
-        const contractsCount = await this.contractModel.find({ client: contract.client }).count()
-        const contractInitDate = dayjs(contract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+        const client = await this.userModel.findById(contract.client)
 
-        const movementList = contract.movementList.filter((movement) => movement.movementDate === today && movement.description.includes('[Abono]') && movement.status === 'validated') || []
-        movementsCollected += movementList.length
-        
-        const paymentList = contract.paymentList || []
-        const totalPayments = contract.payments || 0
-        const daysOff = contract.nonWorkingDays || ''
-        const amount = contract.paymentAmount || 0
-        const paymentDays: any[] = [];
-
-        const havePayments = paymentList.length ? true : false
-
-        let index = 0
-        while (paymentDays.length < totalPayments) {
-
-          const date = contractInitDate.add(index, 'day')
-          const day = date.day()
-          const parsedDay = this.parseDay(day)
-          const isSameContractDate = date.isSame(contractInitDate)
-          const isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
-
-          if(isPayDay) {
-            paymentDays.push(date.format('DD/MM/YYYY'))
-
-            if(date.format('DD/MM/YYYY') === today) {
-              
-              amountToBeCollected += amount
-              paymentsToBeCollected++
-              
-              const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today && payment.status) : null
-              
-              if(havePaymentsByDate && havePaymentsByDate.length) {
-                paymentsCollected++
+        if(client && client.isActive) {
+          const contractsCount = await this.contractModel.find({ client: contract.client }).count()
+          const contractInitDate = dayjs(contract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+  
+          const movementList = contract.movementList.filter((movement) => movement.movementDate === today && movement.description.includes('[Abono]') && movement.status === 'validated') || []
+          movementsCollected += movementList.length
+          
+          const paymentList = contract.paymentList || []
+          const totalPayments = contract.payments || 0
+          const daysOff = contract.nonWorkingDays || ''
+          const amount = contract.paymentAmount || 0
+          const paymentDays: any[] = [];
+  
+          const havePayments = paymentList.length ? true : false
+  
+          let index = 0
+          while (paymentDays.length < totalPayments) {
+  
+            const date = contractInitDate.add(index, 'day')
+            const day = date.day()
+            const parsedDay = this.parseDay(day)
+            const isSameContractDate = date.isSame(contractInitDate)
+            const isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
+  
+            if(isPayDay) {
+              paymentDays.push(date.format('DD/MM/YYYY'))
+  
+              if(date.format('DD/MM/YYYY') === today) {
+                
+                amountToBeCollected += amount
+                paymentsToBeCollected++
+                
+                const havePaymentsByDate = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today && payment.status) : null
+                
+                if(havePaymentsByDate && havePaymentsByDate.length) {
+                  paymentsCollected++
+                }
               }
             }
+  
+  
+            index++
           }
-
-
-          index++
-        }
-
-        if(contractInitDate.format('DD/MM/YYYY') === today) {
-          amountContractsFromToday += contract.loanAmount
-          if(contractsCount === 1) {
-            contractsFromToday++
-          } else {
-            regularContractsFromToday++
+  
+          if(contractInitDate.format('DD/MM/YYYY') === today) {
+            amountContractsFromToday += contract.loanAmount
+            if(contractsCount === 1) {
+              contractsFromToday++
+            } else {
+              regularContractsFromToday++
+            }
           }
+        } else {
+          contract.status = false
+          await contract.save()
         }
       }
 

@@ -288,17 +288,24 @@ export class UsersService {
       if(clients.length) {
         for (let index = 0; index < clients.length; index++) {
           const client = clients[index];
+          client.geolocation = {
+            latitude: 0,
+            longitude: 0
+          }
           const locations = await this.locationModel.find({ client: client._id })
+          console.log("🚀 ~ file: users.service.ts:296 ~ UsersService ~ findClients= ~ locations:", locations)
           if(locations.length) {
-            const clientLastLocation = locations[0]
-            client.geolocation = {
-              latitude: clientLastLocation.latitude,
-              longitude: clientLastLocation.longitude
-            }
-          } else {
-            client.geolocation = {
-              latitude: 0,
-              longitude: 0
+            let clientLastLocation = null
+            locations.forEach((location) => {
+              if(location.latitude !== 0 && location.longitude !== 0) {
+                clientLastLocation = location
+              }
+            });
+            if(clientLastLocation) {
+              client.geolocation = {
+                latitude: clientLastLocation.latitude,
+                longitude: clientLastLocation.longitude
+              }
             }
           }
         }

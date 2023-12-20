@@ -301,6 +301,7 @@ export class ContractsService {
         let daysIncomplete = 0
         let indexPayments = 0
         let pendingAmount = 0
+        let todayIncomplete = false
         
         if(clientData.isActive) {
 
@@ -349,6 +350,7 @@ export class ContractsService {
                     }
                   });
                   if(sum < paymentAmount) {
+                    todayIncomplete = true
                     daysIncomplete++
                   } else {
                     daysPayed++
@@ -370,6 +372,8 @@ export class ContractsService {
                   });
                   if(sum >= paymentAmount) {
                     daysPayed++
+                  } else {
+                    daysIncomplete++
                   }
                 } else {
                   daysLate++
@@ -404,17 +408,15 @@ export class ContractsService {
           daysAhead > 0 ||
           daysLate > 0
         ) {
-          let icon = '' 
+          let icon = 'x-circle' 
           let color = '' 
           
           if(daysLate > 0) {
-            icon = daysIncomplete > 0 ? 'alert-triangle' : 'x-circle'
             color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
             totalUnpaid += 1
           }
 
           if(daysExpired > 0) {
-            icon = 'x-circle'
             color = 'red'
             totalExpired += 1
           }
@@ -425,7 +427,7 @@ export class ContractsService {
             totalAhead += 1
           }
           
-          if(daysIncomplete > 0) {
+          if(todayIncomplete) {
             icon = 'alert-triangle'
             totalIncomplete += 1
           }
@@ -724,7 +726,6 @@ export class ContractsService {
       
       return {
         data: {
-          createdBy: this.formatReturnClientData(client.createdBy) || null,
           haveActiveContracts: true,
           paymentIncompleteDays: paymentIncompleteDays || [],
           paymentAheadDays: paymentAheadDays || [],
@@ -743,6 +744,8 @@ export class ContractsService {
             daysExpired,
             paymentClientNumber,
             paymentClientAmount,
+            clientPoints: client.points,
+            createdBy: this.formatReturnClientData(client.createdBy).fullname || null,
           }
         }
       }

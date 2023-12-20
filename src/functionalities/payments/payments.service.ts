@@ -139,16 +139,19 @@ export class PaymentsService {
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
       })
 
-      await this.locationModel.create({
-        createdBy: userRequest.id,
-        client: clientId,
-        contract: contractExist._id,
-        movement: movement.id,
-        latitude: geolocation?.latitude || 0,
-        longitude: geolocation?.longitude || 0,
-        createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
-        updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
-      })
+      // Create only if it's a real location
+      if(geolocation && geolocation.latitude !== 0 && geolocation.longitude !== 0) {
+        await this.locationModel.create({
+          createdBy: userRequest.id,
+          client: clientId,
+          contract: contractExist._id,
+          movement: movement.id,
+          latitude: geolocation?.latitude || 0,
+          longitude: geolocation?.longitude || 0,
+          createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+          updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        })
+      }
 
       for (let index = 0; index < paymentsToCreate.length; index++) {
         const payment = paymentsToCreate[index];

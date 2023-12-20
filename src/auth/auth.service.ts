@@ -21,7 +21,7 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  private getJwtToken = (payload: JwtPayload) => this.jwtService.sign(payload)
+  private getJwtToken = (payload: JwtPayload) => this.jwtService.sign(payload, { expiresIn: '6h' })
 
   private getUserPermissions = (roleName: string): string => {
     switch (roleName) {
@@ -44,7 +44,7 @@ export class AuthService {
       : ''
       
     return {
-      token: this.getJwtToken({ id: `${ user.id }` }),
+      token: this.getJwtToken({ id: `${ user.id }`, cpf: `${ user.cpf }` }),
       user: {
         permission,
         id: user.id,
