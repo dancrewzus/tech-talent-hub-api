@@ -96,6 +96,147 @@ export class MovementsService {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
 
+  private recalculateLastContract = async (clientId: string) => {
+
+    const client = await this.userModel.findOne({ _id: clientId }).populate('createdBy')
+
+    if(!client) {
+      throw new BadRequestException(`Cliente incorrecto`)
+    }
+
+    const allContractsByUser = await this.contractModel
+        .find({ client: clientId })
+        .sort({ createdAt: 'asc' })
+        .populate('createdBy')
+        .populate('paymentList')
+        .populate('movementList')
+
+    const contractsByUser = allContractsByUser.filter((contract) => contract.status)
+
+    const now = dayjs.tz()
+    const lastContract = contractsByUser[0];
+    const paymentDays: any[] = [];
+
+    const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+
+    const { paymentList, movementList, paymentAmount, payments, nonWorkingDays } = lastContract
+
+    let paymentsIndex = 0
+    while (paymentDays.length < payments) {
+      const date = contractInitDate.add(paymentsIndex, 'day')
+      const day = date.day()
+      const parsedDay = this.parseDay(day)
+      const isSameContractDate = date.isSame(contractInitDate)
+      const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+
+      if(isPayDay) {
+        paymentDays.push(date)
+      }
+
+      paymentsIndex++
+    }
+    
+    const paymentsToDelete = paymentList.map((pay) => pay.id)
+
+    // How much client payed
+    const payed = movementList.reduce((amount, movement) => amount + movement.amount, 0)
+    const newPayments = []
+
+    let paymentNumber = 1
+    for (let index = 0; index < movementList.length; index++) {
+      const movement = movementList[index];
+
+      const contractExist = await this.contractModel
+        .findOne({ _id: movement.contract })
+
+      if(!contractExist) {
+        throw new BadRequestException(`No es posible encontrar el contrato"`)
+      }
+
+      let movementPaymentAmount = movement.amount
+      
+      while(movementPaymentAmount > 0) {
+        
+        let payed = 0
+
+        const lastPayment = newPayments.length ? newPayments[newPayments.length - 1] : null
+        const lastNumber = lastPayment ? lastPayment.paymentNumber : null
+        
+        if(lastPayment) {
+          const lastNumberTotalPayed = newPayments
+            .filter((payment) => payment.paymentNumber === lastNumber)
+            .reduce((amount, payment) => amount + payment.amount, 0)
+
+          if(lastNumberTotalPayed < paymentAmount) {
+            const debt = paymentAmount - lastNumberTotalPayed
+            if(movementPaymentAmount >= debt) {
+              payed = debt              
+            } else {
+              payed = movementPaymentAmount
+            }
+            paymentNumber--
+          }
+        }
+
+        if(payed === 0) {
+          payed = movementPaymentAmount < paymentAmount ? movementPaymentAmount : paymentAmount
+        }
+
+
+        newPayments.push({
+          createdBy: movement.createdBy,
+          status: movement.status === 'validated' ? true : false,
+          client: contractExist.client,
+          contract: movement.contract,
+          movement: movement.id,
+          amount: payed,
+          paymentNumber: paymentNumber,
+          paymentDate: dayjs(paymentDays[paymentNumber - 1]).tz().format('DD/MM/YYYY'),
+          paymentPicture: movement.paymentPicture,
+          createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
+          updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
+        })
+
+        movementPaymentAmount -= payed
+        paymentNumber++
+      }
+    }
+
+    const totalPayed = newPayments.reduce((amount, payment) => amount + payment.amount, 0)
+
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ totalPayed:", totalPayed)
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ payed:", payed)
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments.length:", newPayments.length)
+    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ movementList:", movementList)
+    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments:", newPayments)
+    
+    if(payed === totalPayed) {
+      try {
+        for (let index = 0; index < paymentsToDelete.length; index++) {
+          const paymentId = paymentsToDelete[index];
+          await this.paymentModel.deleteOne({ _id: paymentId })
+          lastContract.paymentList = []
+          await lastContract.save()
+        }
+
+        for (let index = 0; index < newPayments.length; index++) {
+          const payment = newPayments[index];
+          const created = await this.paymentModel.create(payment)
+          lastContract.paymentList.push(created)
+          await lastContract.save()
+          // console.log("🚀 ~ file: contracts.service.ts:793 ~ ContractsService ~ recalculateLastContract= ~ created:", created)
+        }
+      } catch (error) {
+        console.log("🚀 ~ file: contracts.service.ts:755 ~ ContractsService ~ recalculateLastContract= ~ error:", error)
+        throw new Error(error)
+      }
+    }
+    
+    return { data: 'ok' }
+  }
+
   private deleteMovementsAndPayments = async ({ contract, movement }) => {
     try {
 
@@ -553,7 +694,7 @@ export class MovementsService {
       })
     }
     try {
-      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture')
+      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture').populate('client')
       if(!movement) {
         throw new NotFoundException(`Payment with id "${ id }" not found`)
       }
@@ -563,6 +704,7 @@ export class MovementsService {
           .populate('movementList')
   
         await this.deleteMovementsAndPayments({ contract, movement })
+        await this.recalculateLastContract(contract.client?._id)
       } else {
         const { paymentPicture } = movement
         await this.cloudAdapter.deleteResource(paymentPicture.publicId)

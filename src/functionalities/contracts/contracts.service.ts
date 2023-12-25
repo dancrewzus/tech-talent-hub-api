@@ -582,9 +582,8 @@ export class ContractsService {
 
       let daysLate = 0
       let daysExpired = 0
-      let pending = 0
+      // let pending = 0
       let mustTodayPayed = 0
-      // let payedAmount = 0
       
       let index = 0
       while (paymentDays.length < totalPayments) {
@@ -623,10 +622,10 @@ export class ContractsService {
         if(havePaymentsByDate && havePaymentsByDate.length) {
           let sumPaymentByDate = 0
           havePaymentsByDate.forEach((payment) => { sumPaymentByDate = sumPaymentByDate + payment.amount });
-          // payedAmount += sumPaymentByDate
           if(sumPaymentByDate < amount) {
+            // const rest = amount - sumPaymentByDate
             color = this.ColorConstants.NOT_PAYED
-            pending += (amount - sumPaymentByDate)
+            // pending += rest
             paidIncompleteAmount += sumPaymentByDate
             const existByDate = paymentIncompleteDays.findIndex((paymentDate) => paymentDate === date.format('DD/MM/YYYY'))
             if(existByDate === -1) {
@@ -660,12 +659,10 @@ export class ContractsService {
           // Dias de atraso
           if((isBefore || isToday) && isPayDay) {
             color = this.ColorConstants.NOT_PAYED
-            pending += lastContract.paymentAmount
+            // pending += lastContract.paymentAmount
             daysLate++
           }
         }
-
-        // color = haveMovements.find((mov) => mov.status === 'pending') ? this.ColorConstants.PENDING : color
 
         calendarEvents.push({
           start: date.format('YYYY-MM-DD') + 'T00:00:00',
@@ -723,7 +720,7 @@ export class ContractsService {
 
       const outstanding = lastContract?.totalAmount - paidAmount
       const haveAdvancedPayments = paidAmount > mustTodayPayed ? true : false
-      
+      1
       return {
         data: {
           haveActiveContracts: true,
@@ -738,7 +735,7 @@ export class ContractsService {
             clientOpen      : outstanding,
             clientStablish  : paidAmount,
             pendingForValidate,
-            pending: haveAdvancedPayments ? 0 : pending + pendingForValidate,
+            pending: haveAdvancedPayments ? 0 : (mustTodayPayed - paidAmount),// () + pendingForValidate,
             // incompleteAmount,
             daysLate,
             daysExpired,
