@@ -1,12 +1,21 @@
 import * as Joi from 'joi';
 
 export const JoiValidationSchema = Joi.object({
-  MONGO_DB_USER: Joi.required(),
-  MONGO_DB_PASSWORD: Joi.required(),
-  MONGO_DB_CLUSTER: Joi.required(),
-  MONGO_DB_NAME: Joi.required(),
+  STAGE: Joi.required(),
+  // MONGODB
+  MONGODB_USER: Joi.required(),
+  MONGODB_PASSWORD: Joi.required(),
+  MONGODB_CLUSTER: Joi.required(),
+  MONGODB_NAME_TEST: Joi.required(),
+  MONGODB_NAME_PROD: Joi.required(),
+  // JSON WEB TOKEN
   JWT_SECRET: Joi.required(),
   JWT_EXPIRES_IN: Joi.required(),
+  // CLOUDINARY
+  CLOUDINARY_CLOUD_NAME: Joi.required(),
+  CLOUDINARY_API_SECRET: Joi.required(),
+  CLOUDINARY_API_KEY: Joi.required(),
+  // GENERAL
   DEFAULT_LIMIT: Joi.number().default(10),
   PORT: Joi.number().default(3000)
 })

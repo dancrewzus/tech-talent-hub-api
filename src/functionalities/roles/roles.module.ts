@@ -20,7 +20,7 @@ import { AuthModule } from 'src/auth/auth.module';
         name: Role.name,
         schema: RoleSchema
       },
-    ])
+    ], 'default')
   ],
   exports: [ RolesService ],
 })

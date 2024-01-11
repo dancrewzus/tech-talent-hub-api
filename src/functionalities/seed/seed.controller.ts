@@ -6,8 +6,13 @@ import { SeedService } from './seed.service';
 export class SeedController {
   constructor(private readonly seedService: SeedService) {}
 
-  @Get()
+  @Get('all')
   seedAll() {
     return this.seedService.seedAll();
+  }
+  
+  @Get('clone')
+  cloneDatabase() {
+    return this.seedService.cloneDatabase({ origin: 'test', destiny: 'production' });
   }
 }

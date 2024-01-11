@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { AxiosAdapter } from './adapters/axios.adapter';
 import { CloudAdapter } from './adapters/cloud.adapter';
-// import { TensorflowUtil } from './utils/tensorflow.util';
 import { HandleErrors } from './utils/handleErrors.util';
 import { TimeHandler } from './utils/timeHandler.util';
 import { Utils } from './utils/utils';
@@ -11,7 +10,6 @@ import { Utils } from './utils/utils';
   providers: [
     AxiosAdapter,
     CloudAdapter,
-    // TensorflowUtil,
     HandleErrors,
     TimeHandler,
     Utils
@@ -19,7 +17,6 @@ import { Utils } from './utils/utils';
   exports: [
     AxiosAdapter,
     CloudAdapter,
-    // TensorflowUtil,
     HandleErrors,
     TimeHandler,
     Utils

@@ -13,13 +13,13 @@ import { User } from 'src/functionalities/users/entities/user.entity';
 export class JwtStrategy extends PassportStrategy(Strategy) {
 
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
   ) {
     super({
       ignoreExpiration: false,
-      secretOrKey: configService.get('jwtSecret'),
+      secretOrKey: configService.get<string>('jwtSecret'),
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }
@@ -31,10 +31,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         .populate({ path: 'role', select: 'name' })
 
       if(!user) {
-        throw new UnauthorizedException('Invalid token')
+        throw new UnauthorizedException('Token inválido')
       }
       if(!user.isActive) {
-        throw new UnauthorizedException('User is inactive')
+        throw new UnauthorizedException('El usuario está inactivo')
       }
       
       return user

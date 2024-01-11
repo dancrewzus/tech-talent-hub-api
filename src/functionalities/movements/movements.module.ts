@@ -52,7 +52,7 @@ import { AuthModule } from 'src/auth/auth.module';
         name: Payment.name,
         schema: PaymentSchema
       },
-    ])
+    ], 'default')
   ]
 })
 export class MovementsModule {}
