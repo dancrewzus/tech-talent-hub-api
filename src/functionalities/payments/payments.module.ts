@@ -45,7 +45,7 @@ import { AuthModule } from 'src/auth/auth.module';
         name: Image.name,
         schema: ImageSchema
       },
-    ])
+    ], 'default')
   ]
 })
 export class PaymentsModule {}

@@ -32,7 +32,7 @@ import { UsersService } from './users.service';
         name: Image.name,
         schema: ImageSchema
       },
-    ])
+    ], 'default')
   ], 
   exports: [ UsersService ]
 })

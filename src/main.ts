@@ -22,8 +22,8 @@ async function bootstrap() {
     }
   }));
   const config = new DocumentBuilder()
-    .setTitle('UWOD API')
-    .setDescription('UWOD, innovadora aplicación de tecnología deportiva.')
+    .setTitle('IMPERIAL APP')
+    .setDescription('IMPERIAL.')
     .setVersion('0.0.1')
     .build();
   const document = SwaggerModule.createDocument(app, config);

@@ -15,8 +15,8 @@ import { LoginDto } from './dto/login.dto'
 export class AuthService {
   
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
-    @InjectModel(Role.name) private readonly roleModel: Model<Role>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
+    @InjectModel(Role.name, 'default') private readonly roleModel: Model<Role>,
     private readonly handleErrors: HandleErrors,
     private readonly jwtService: JwtService
   ) {}

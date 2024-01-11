@@ -1,17 +1,18 @@
 
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common'
 import { v2 as cloudinary } from 'cloudinary'
+import envConfig from '../../config/env.config'
 
 @Injectable()
 export class CloudAdapter {
   
   private initInstance = () => {
     cloudinary.config({ 
-      cloud_name: 'dexjdvnyo', 
-      api_key: '596566317146525', 
-      api_secret: 'Ec-pZ7kgKloFVCOBYP9ir8m6fw0' 
+      cloud_name: envConfig().cloudinaryCloudName, 
+      api_secret: envConfig().cloudinaryApiSecret,
+      api_key: envConfig().cloudinaryApiKey, 
     });
-  }       
+  }
 
   public uploadImage = async (base64: string, type: string): Promise<any> => {
     try {
@@ -50,7 +51,7 @@ export class CloudAdapter {
         height: response.height,
       }
     } catch (error) {
-      throw new Error("Cannot upload resource.");
+      throw new Error('Cannot upload resource.');
     }
   }
 
@@ -63,7 +64,7 @@ export class CloudAdapter {
       return
 
     } catch (error) {
-      console.log("Cannot delete all resources.");
+      console.log('Cannot delete all resources.');
     }
   }
   

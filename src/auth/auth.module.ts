@@ -19,16 +19,14 @@ import { AuthService } from './auth.service'
     MongooseModule.forFeature([
       {
         name: User.name,
-        schema: UserSchema
+        schema: UserSchema,
       },
       {
         name: Role.name,
         schema: RoleSchema
       },
-    ]),
-    PassportModule.register({
-      defaultStrategy: 'jwt'
-    }),
+    ], 'default'),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync(JWT_CONFIG)
   ],
   exports: [ JwtStrategy, PassportModule, JwtModule ]

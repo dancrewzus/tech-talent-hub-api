@@ -80,13 +80,13 @@ export class MovementsService {
   }
 
   constructor(
-    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
-    @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
-    @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
-    @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
-    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
-    @InjectModel(Role.name) private readonly roleModel: Model<Role>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Geolocation.name, 'default') private readonly locationModel: Model<Geolocation>,
+    @InjectModel(Contract.name, 'default') private readonly contractModel: Model<Contract>,
+    @InjectModel(Movement.name, 'default') private readonly movementModel: Model<Movement>,
+    @InjectModel(Payment.name, 'default') private readonly paymentModel: Model<Payment>,
+    @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
+    @InjectModel(Role.name, 'default') private readonly roleModel: Model<Role>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly contractsService: ContractsService,
     private readonly paymentsService: PaymentsService,
     private readonly configService: ConfigService,
@@ -658,7 +658,7 @@ export class MovementsService {
 
       const clientId = new BSON.ObjectId( contractExist?.client?._id )
       const clientExist = await this.userModel.findById(clientId)
-      console.log("🚀 ~ file: movements.service.ts:513 ~ MovementsService ~ validateMovement= ~ clientExist:", clientExist)
+      // console.log("🚀 ~ file: movements.service.ts:513 ~ MovementsService ~ validateMovement= ~ clientExist:", clientExist)
 
       if(!contractExist || !clientExist) {
         throw new BadRequestException(`Ha ocurrido un error al encontrar el contrato o cliente`)
@@ -694,7 +694,7 @@ export class MovementsService {
       })
     }
     try {
-      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture').populate('client')
+      const movement = await this.movementModel.findById(id).populate('paymentList').populate('paymentPicture')
       if(!movement) {
         throw new NotFoundException(`Payment with id "${ id }" not found`)
       }
@@ -702,6 +702,7 @@ export class MovementsService {
         const contract = await this.contractModel.findById(movement.contract)
           .populate('paymentList')
           .populate('movementList')
+          .populate('client')
   
         await this.deleteMovementsAndPayments({ contract, movement })
         await this.recalculateLastContract(contract.client?._id)

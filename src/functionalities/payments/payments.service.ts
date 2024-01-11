@@ -41,12 +41,12 @@ export class PaymentsService {
   }
 
   constructor(
-    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
-    @InjectModel(Contract.name) private readonly contractModel: Model<Contract>,
-    @InjectModel(Movement.name) private readonly movementModel: Model<Movement>,
-    @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
-    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Geolocation.name, 'default') private readonly locationModel: Model<Geolocation>,
+    @InjectModel(Contract.name, 'default') private readonly contractModel: Model<Contract>,
+    @InjectModel(Movement.name, 'default') private readonly movementModel: Model<Movement>,
+    @InjectModel(Payment.name, 'default') private readonly paymentModel: Model<Payment>,
+    @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {

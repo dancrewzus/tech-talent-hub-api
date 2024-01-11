@@ -15,7 +15,7 @@ export class RolesService {
   private defaultLimit: number;
 
   constructor(
-    @InjectModel(Role.name) private readonly roleModel: Model<Role>,
+    @InjectModel(Role.name, 'default') private readonly roleModel: Model<Role>,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {

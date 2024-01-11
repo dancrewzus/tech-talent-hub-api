@@ -26,7 +26,7 @@ import { ImagesService } from './images.service'
         name: User.name,
         schema: UserSchema
       },
-    ])
+    ], 'default')
   ]
 })
 export class ImagesModule {}

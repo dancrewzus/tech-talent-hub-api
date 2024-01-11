@@ -41,8 +41,8 @@ export class ImagesService {
   }
 
   constructor(
-    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
     private readonly cloudAdapter: CloudAdapter,

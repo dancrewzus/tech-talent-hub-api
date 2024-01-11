@@ -36,9 +36,9 @@ export class UsersService {
   private defaultLimit: number;
 
   constructor(
-    @InjectModel(Geolocation.name) private readonly locationModel: Model<Geolocation>,
-    @InjectModel(Image.name) private readonly imageModel: Model<Image>,
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Geolocation.name, 'default') private readonly locationModel: Model<Geolocation>,
+    @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
+    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
     private readonly roleService: RolesService,
@@ -293,7 +293,7 @@ export class UsersService {
             longitude: 0
           }
           const locations = await this.locationModel.find({ client: client._id })
-          console.log("🚀 ~ file: users.service.ts:296 ~ UsersService ~ findClients= ~ locations:", locations)
+          // console.log("🚀 ~ file: users.service.ts:296 ~ UsersService ~ findClients= ~ locations:", locations)
           if(locations.length) {
             let clientLastLocation = null
             locations.forEach((location) => {
