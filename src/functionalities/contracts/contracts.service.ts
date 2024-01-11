@@ -509,9 +509,9 @@ export class ContractsService {
         const contract = activeContracts[index];
         const validatedMovements = contract.movementList.filter((movement) => movement.status === 'validated')
         const payed = validatedMovements.reduce((sum, mov) => sum + mov.amount, 0);
-        if(!contract.isOutdated && payed === contract.totalAmount) {
+        if(payed === contract.totalAmount) {
           contract.status = false
-          client.points = client.points + 1
+          client.points = !contract.isOutdated ? client.points + 1 : client.points - 1
           await contract.save()
           await client.save()
         } else {
@@ -720,7 +720,6 @@ export class ContractsService {
 
       const outstanding = lastContract?.totalAmount - paidAmount
       const haveAdvancedPayments = paidAmount > mustTodayPayed ? true : false
-      1
       return {
         data: {
           haveActiveContracts: true,

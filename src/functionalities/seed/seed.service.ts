@@ -112,13 +112,15 @@ export class SeedService {
         users
       ] = await Promise.all([
         this.geolocationModel.find(),
-        this.contractModel.find(),
-        this.movementModel.find(),
+        this.contractModel.find().populate('paymentList', '_id').populate('movementList', '_id'),
+        this.movementModel.find().populate('paymentList', '_id'),
         this.paymentModel.find(),
         this.imageModel.find(),
         this.roleModel.find(),
         this.userModel.find(),
       ])
+
+      console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
 
       // STORE RESOURCES TO DESTINY
       await Promise.all([
