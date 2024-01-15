@@ -30,6 +30,7 @@ import { Image } from '../images/entities/image.entity'
 import { Contract } from './entities/contracts.entity'
 import { User } from '../users/entities/user.entity'
 import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
+import { Holiday } from '../holidays/entities/holiday.entity'
 
 @Injectable()
 export class ContractsService {
@@ -196,6 +197,7 @@ export class ContractsService {
     @InjectModel(Movement.name, 'default') private readonly movementModel: Model<Movement>,
     @InjectModel(Contract.name, 'default') private readonly contractModel: Model<Contract>,
     @InjectModel(Payment.name, 'default') private readonly paymentModel: Model<Payment>,
+    @InjectModel(Holiday.name, 'default') private readonly holidayModel: Model<Holiday>,
     @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
     @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
@@ -532,6 +534,9 @@ export class ContractsService {
         }
       }
 
+      const holidays = await this.holidayModel.find()
+      const holidaysDates = holidays.map((date) => date.holidayDate)
+
       const today = dayjs.tz()
       const lastContract = contractsByUser[0];
 
@@ -596,8 +601,14 @@ export class ContractsService {
         const isBefore = date.isBefore(today)
         const isToday = date.isSame(today, 'date')
         const isAhead = date.isAfter(today)
-        const isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
+        let isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
         const haveMovements = movementList.filter((mov) => mov.movementDate === date.format('DD/MM/YYYY'))
+        const formattedDate = date.format('DD/MM/YYYY')
+        const isHoliday = holidaysDates?.includes(formattedDate)
+
+        if(isHoliday) {
+          isPayDay = false
+        }
 
         // No es un día de pago
         if(!isPayDay) {
