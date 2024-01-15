@@ -15,6 +15,7 @@ import { MovementsController } from './movements.controller';
 import { CommonModule } from 'src/common/common.module';
 import { MovementsService } from './movements.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { Holiday, HolidaySchema } from '../holidays/entities/holiday.entity';
 
 @Module({
   controllers: [ MovementsController ],
@@ -51,6 +52,10 @@ import { AuthModule } from 'src/auth/auth.module';
       {
         name: Payment.name,
         schema: PaymentSchema
+      },
+      {
+        name: Holiday.name,
+        schema: HolidaySchema
       },
     ], 'default')
   ]
