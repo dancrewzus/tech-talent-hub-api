@@ -9,7 +9,7 @@ export class LoginDto {
     required: true,
   })
   @IsString()
-  @MinLength(5)
+  @MinLength(4)
   cpf: string
   
   @ApiProperty({
@@ -17,7 +17,7 @@ export class LoginDto {
     description: 'Contraseña del usuario.',
   })
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   @MaxLength(50)
   password: string
 }

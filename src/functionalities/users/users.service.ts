@@ -75,6 +75,7 @@ export class UsersService {
       id: user.id,
       cpf: user.cpf,
       email: user.email,
+      isActive: user.isActive,
       isLogged: user.isLogged,
       fullname: `${ this.capitalizeFirstLetter(user.firstName) } ${ this.capitalizeFirstLetter(user.paternalSurname) }` || '',
       firstName: this.capitalizeFirstLetter(user.firstName) || '',
@@ -180,12 +181,11 @@ export class UsersService {
     const isSearch = filter !== '' ? true : false
 
     try {
-
-      let count = 0
       let users: any[] = []
       const notIn = { $nin: [ clientRole.id, rootRole.id ]}
       let data: any = {
         role: type === 'client' ? clientRole.id : notIn,
+        isActive: true,
       }
 
       if(isSearch) {
@@ -194,24 +194,27 @@ export class UsersService {
             { 
               cpf: new RegExp(filter, 'i'),
               role: type === 'client' ? clientRole.id : notIn,
+              isActive: true,
             },
             {
               firstName: new RegExp(filter, 'i'),
               role: type === 'client' ? clientRole.id : notIn,
+              isActive: true,
             },
             {
               paternalSurname: new RegExp(filter, 'i'),
               role: type === 'client' ? clientRole.id : notIn,
+              isActive: true,
             },
             {
               phoneNumber: new RegExp(filter, 'i'),
               role: type === 'client' ? clientRole.id : notIn,
+              isActive: true,
             },
           ]
         }
       }
 
-      count = await this.userModel.count(data)
       users = await this.userModel.find(data)
         .skip( setOffset )
         .limit( setLimit )
@@ -221,9 +224,11 @@ export class UsersService {
         .populate('profilePicture')
         .populate('addressPicture')
 
+      const list = users.map((client) => this.formatReturnData(client)).filter((el) => el !== null)
+
       return {
-        data: users.map((client) => this.formatReturnData(client)),
-        count
+        data: list,
+        count: list.length
       }
     } catch (error) {
       this.handleErrors.handleExceptions(error)
