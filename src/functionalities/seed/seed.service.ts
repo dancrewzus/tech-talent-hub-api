@@ -120,7 +120,7 @@ export class SeedService {
         this.userModel.find(),
       ])
 
-      console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
 
       // STORE RESOURCES TO DESTINY
       await Promise.all([
@@ -139,6 +139,44 @@ export class SeedService {
       await this.paymentModelProduction.insertMany(payments)
       await this.imageModelProduction.insertMany(images)
       await this.geolocationModelProduction.insertMany(geolocation)
+
+      // const [ 
+      //   geolocation, 
+      //   contracts, 
+      //   movements,
+      //   payments,
+      //   images,
+      //   roles,
+      //   users
+      // ] = await Promise.all([
+      //   this.geolocationModelProduction.find(),
+      //   this.contractModelProduction.find().populate('paymentList', '_id').populate('movementList', '_id'),
+      //   this.movementModelProduction.find().populate('paymentList', '_id'),
+      //   this.paymentModelProduction.find(),
+      //   this.imageModelProduction.find(),
+      //   this.roleModelProduction.find(),
+      //   this.userModelProduction.find(),
+      // ])
+
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
+
+      // // STORE RESOURCES TO DESTINY
+      // await Promise.all([
+      //   this.geolocationModel.deleteMany(),
+      //   this.contractModel.deleteMany(),
+      //   this.movementModel.deleteMany(),
+      //   this.paymentModel.deleteMany(),
+      //   this.imageModel.deleteMany(),
+      //   this.roleModel.deleteMany(),
+      //   this.userModel.deleteMany(),
+      // ])
+      // await this.roleModel.insertMany(roles)
+      // await this.userModel.insertMany(users)
+      // await this.contractModel.insertMany(contracts)
+      // await this.movementModel.insertMany(movements)
+      // await this.paymentModel.insertMany(payments)
+      // await this.imageModel.insertMany(images)
+      // await this.geolocationModel.insertMany(geolocation)
 
       return 'Copia de seguridad realizada con éxito'
 
