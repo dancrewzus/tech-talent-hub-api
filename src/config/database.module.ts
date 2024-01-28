@@ -32,6 +32,15 @@ import { Module } from "@nestjs/common";
       }),
       inject: [ ConfigService ],
     }),
+    
+    MongooseModule.forRootAsync({
+      imports: [ ConfigModule ],
+      connectionName: 'backup',
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('mongoConnectionBackup'),
+      }),
+      inject: [ ConfigService ],
+    }),
 
   ],
 })

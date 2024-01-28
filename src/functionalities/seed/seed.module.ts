@@ -13,6 +13,8 @@ import { CommonModule } from 'src/common/common.module'
 import { SeedController } from './seed.controller'
 import { SeedService } from './seed.service'
 import { SeedData } from './data/data.seed'
+import { Holiday, HolidaySchema } from '../holidays/entities/holiday.entity'
+import { Modality, ModalitySchema } from '../modality/entities/modality.entity'
 
 const MODELS = [
   {
@@ -43,6 +45,14 @@ const MODELS = [
     name: Geolocation.name,
     schema: GeolocationSchema
   },
+  {
+    name: Holiday.name,
+    schema: HolidaySchema
+  },
+  {
+    name: Modality.name,
+    schema: ModalitySchema
+  },
 ]
 
 @Module({
@@ -52,6 +62,7 @@ const MODELS = [
     ConfigModule,
     CommonModule,
     MongooseModule.forFeature(MODELS, 'test'),
+    MongooseModule.forFeature(MODELS, 'backup'),
     MongooseModule.forFeature(MODELS, 'production'),
   ],
 })

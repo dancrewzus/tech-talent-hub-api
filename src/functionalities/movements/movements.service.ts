@@ -524,7 +524,7 @@ export class MovementsService {
 
     const role = userRequest.role?.name
 
-    if(!role || !['root', 'admin'].includes(role)) {
+  if(!role || !['root', 'admin', 'collector'].includes(role)) {
       this.handleErrors.handleExceptions({
         code: 401,
         message: 'No tienes permisos para realizar esta acción.'

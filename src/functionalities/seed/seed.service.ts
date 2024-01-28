@@ -4,10 +4,12 @@ import * as bcrypt from 'bcrypt'
 import { Model } from 'mongoose'
 
 import { Geolocation } from '../movements/entities/location.entity'
-import { Role } from 'src/functionalities/roles/entities/role.entity'
 import { HandleErrors } from 'src/common/utils/handleErrors.util'
+import { Role } from 'src/functionalities/roles/entities/role.entity'
 import { Contract } from '../contracts/entities/contracts.entity'
 import { Movement } from '../movements/entities/movement.entity'
+import { Holiday } from '../holidays/entities/holiday.entity'
+import { Modality } from '../modality/entities/modality.entity'
 import { Payment } from '../payments/entities/payment.entity'
 import { Image } from '../images/entities/image.entity'
 import { User } from '../users/entities/user.entity';
@@ -20,7 +22,7 @@ export class SeedService {
 
   private logger
 
-  constructor(
+  constructor(    
     @InjectModel(Geolocation.name, 'production') private readonly geolocationModelProduction: Model<Geolocation>,
     @InjectModel(Contract.name, 'production') private readonly contractModelProduction: Model<Contract>,
     @InjectModel(Movement.name, 'production') private readonly movementModelProduction: Model<Movement>,
@@ -28,6 +30,8 @@ export class SeedService {
     @InjectModel(Image.name, 'production') private readonly imageModelProduction: Model<Image>,
     @InjectModel(Role.name, 'production') private readonly roleModelProduction: Model<Role>,
     @InjectModel(User.name, 'production') private readonly userModelProduction: Model<User>,
+    @InjectModel(Modality.name, 'production') private readonly modalityModelProduction: Model<Modality>,
+    @InjectModel(Holiday.name, 'production') private readonly holidayModelProduction: Model<Holiday>,
 
     @InjectModel(Geolocation.name, 'test') private readonly geolocationModel: Model<Geolocation>,
     @InjectModel(Contract.name, 'test') private readonly contractModel: Model<Contract>,
@@ -36,6 +40,8 @@ export class SeedService {
     @InjectModel(Image.name, 'test') private readonly imageModel: Model<Image>,
     @InjectModel(Role.name, 'test') private readonly roleModel: Model<Role>,
     @InjectModel(User.name, 'test') private readonly userModel: Model<User>,
+    @InjectModel(Modality.name, 'test') private readonly modalityModel: Model<Modality>,
+    @InjectModel(Holiday.name, 'test') private readonly holidayModel: Model<Holiday>,
 
     private readonly handleErrors: HandleErrors,
     private readonly cloudAdapter: CloudAdapter,
@@ -101,82 +107,48 @@ export class SeedService {
 
   public cloneDatabase = async ({ }) => {
     try {
-      // GET RESOURCES FROM ORIGIN
       const [ 
         geolocation, 
+        modalities,
         contracts, 
         movements,
         payments,
+        holidays,
         images,
         roles,
         users
       ] = await Promise.all([
-        this.geolocationModel.find(),
-        this.contractModel.find().populate('paymentList', '_id').populate('movementList', '_id'),
-        this.movementModel.find().populate('paymentList', '_id'),
-        this.paymentModel.find(),
-        this.imageModel.find(),
-        this.roleModel.find(),
-        this.userModel.find(),
+        this.geolocationModelProduction.find(),
+        this.modalityModelProduction.find(),
+        this.contractModelProduction.find().populate('paymentList', '_id').populate('movementList', '_id'),
+        this.movementModelProduction.find().populate('paymentList', '_id'),
+        this.holidayModelProduction.find(),
+        this.paymentModelProduction.find(),
+        this.imageModelProduction.find(),
+        this.roleModelProduction.find(),
+        this.userModelProduction.find(),
       ])
 
-      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
-
-      // STORE RESOURCES TO DESTINY
       await Promise.all([
-        this.geolocationModelProduction.deleteMany(),
-        this.contractModelProduction.deleteMany(),
-        this.movementModelProduction.deleteMany(),
-        this.paymentModelProduction.deleteMany(),
-        this.imageModelProduction.deleteMany(),
-        this.roleModelProduction.deleteMany(),
-        this.userModelProduction.deleteMany(),
+        this.geolocationModel.deleteMany(),
+        this.modalityModel.deleteMany(),
+        this.contractModel.deleteMany(),
+        this.movementModel.deleteMany(),
+        this.paymentModel.deleteMany(),
+        this.holidayModel.deleteMany(),
+        this.imageModel.deleteMany(),
+        this.roleModel.deleteMany(),
+        this.userModel.deleteMany(),
       ])
-      await this.roleModelProduction.insertMany(roles)
-      await this.userModelProduction.insertMany(users)
-      await this.contractModelProduction.insertMany(contracts)
-      await this.movementModelProduction.insertMany(movements)
-      await this.paymentModelProduction.insertMany(payments)
-      await this.imageModelProduction.insertMany(images)
-      await this.geolocationModelProduction.insertMany(geolocation)
-
-      // const [ 
-      //   geolocation, 
-      //   contracts, 
-      //   movements,
-      //   payments,
-      //   images,
-      //   roles,
-      //   users
-      // ] = await Promise.all([
-      //   this.geolocationModelProduction.find(),
-      //   this.contractModelProduction.find().populate('paymentList', '_id').populate('movementList', '_id'),
-      //   this.movementModelProduction.find().populate('paymentList', '_id'),
-      //   this.paymentModelProduction.find(),
-      //   this.imageModelProduction.find(),
-      //   this.roleModelProduction.find(),
-      //   this.userModelProduction.find(),
-      // ])
-
-      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ movements:", movements)
-
-      // // STORE RESOURCES TO DESTINY
-      // await Promise.all([
-      //   this.geolocationModel.deleteMany(),
-      //   this.contractModel.deleteMany(),
-      //   this.movementModel.deleteMany(),
-      //   this.paymentModel.deleteMany(),
-      //   this.imageModel.deleteMany(),
-      //   this.roleModel.deleteMany(),
-      //   this.userModel.deleteMany(),
-      // ])
-      // await this.roleModel.insertMany(roles)
-      // await this.userModel.insertMany(users)
-      // await this.contractModel.insertMany(contracts)
-      // await this.movementModel.insertMany(movements)
-      // await this.paymentModel.insertMany(payments)
-      // await this.imageModel.insertMany(images)
-      // await this.geolocationModel.insertMany(geolocation)
+      await this.roleModel.insertMany(roles)
+      await this.userModel.insertMany(users)
+      await this.modalityModel.insertMany(modalities)
+      await this.holidayModel.insertMany(holidays)
+      await this.contractModel.insertMany(contracts)
+      await this.movementModel.insertMany(movements)
+      await this.paymentModel.insertMany(payments)
+      await this.imageModel.insertMany(images)
+      await this.geolocationModel.insertMany(geolocation)
 
       return 'Copia de seguridad realizada con éxito'
 

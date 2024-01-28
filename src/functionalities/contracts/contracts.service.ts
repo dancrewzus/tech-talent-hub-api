@@ -786,13 +786,23 @@ export class ContractsService {
 
     const { paymentList, movementList, paymentAmount, payments, nonWorkingDays } = lastContract
 
+    const holidays = await this.holidayModel.find()
+    const holidaysDates = holidays.map((date) => date.holidayDate)
+
     let paymentsIndex = 0
     while (paymentDays.length < payments) {
       const date = contractInitDate.add(paymentsIndex, 'day')
       const day = date.day()
       const parsedDay = this.parseDay(day)
       const isSameContractDate = date.isSame(contractInitDate)
-      const isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+      let isPayDay = !nonWorkingDays?.includes(parsedDay) && !isSameContractDate
+
+      const formattedDate = date.format('DD/MM/YYYY')
+      const isHoliday = holidaysDates?.includes(formattedDate)
+
+      if(isHoliday) {
+        isPayDay = false
+      }
 
       if(isPayDay) {
         paymentDays.push(date)
@@ -868,14 +878,6 @@ export class ContractsService {
     }
 
     const totalPayed = newPayments.reduce((amount, payment) => amount + payment.amount, 0)
-
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ totalPayed:", totalPayed)
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ payed:", payed)
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments.length:", newPayments.length)
-    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ movementList:", movementList)
-    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments:", newPayments)
     
     if(payed === totalPayed) {
       try {
@@ -891,7 +893,6 @@ export class ContractsService {
           const created = await this.paymentModel.create(payment)
           lastContract.paymentList.push(created)
           await lastContract.save()
-          // console.log("🚀 ~ file: contracts.service.ts:793 ~ ContractsService ~ recalculateLastContract= ~ created:", created)
         }
       } catch (error) {
         console.log("🚀 ~ file: contracts.service.ts:755 ~ ContractsService ~ recalculateLastContract= ~ error:", error)

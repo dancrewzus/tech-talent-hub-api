@@ -8,6 +8,7 @@ export const JoiValidationSchema = Joi.object({
   MONGODB_CLUSTER: Joi.required(),
   MONGODB_NAME_TEST: Joi.required(),
   MONGODB_NAME_PROD: Joi.required(),
+  MONGODB_NAME_BACKUP: Joi.required(),
   // JSON WEB TOKEN
   JWT_SECRET: Joi.required(),
   JWT_EXPIRES_IN: Joi.required(),
