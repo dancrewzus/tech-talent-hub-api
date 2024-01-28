@@ -43,9 +43,7 @@ export class JobsService {
     private readonly handleErrors: HandleErrors,
   ) { }
 
-  @Cron('10 0 * * *')
-  // @Cron('45 * * * * *')
-  // @Timeout(5000)
+  @Cron('10 1,13 * * *')
   async handleCron() {
     try {
       const [ 
