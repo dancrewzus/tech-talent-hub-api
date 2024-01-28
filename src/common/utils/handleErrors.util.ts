@@ -11,7 +11,7 @@ import {
 export class HandleErrors {
 
   private createMessage = (message: string): string => {
-    return `${ message }, please verify and try again.`
+    return `${ message }`
   }
 
   private createDuplicatedMessage = (error): string => {

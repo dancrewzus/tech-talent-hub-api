@@ -14,7 +14,7 @@ import { Contract } from './entities/contracts.entity'
 
 @ApiTags('Contracts')
 @Controller('contracts')
-@Auth()
+// @Auth()
 export class ContractsController {
 
   constructor(private readonly contractService: ContractsService) {}
@@ -99,7 +99,7 @@ export class ContractsController {
   }
   
   @Get('/recalculate/user/:id')
-  @Auth()
+  // @Auth()
   @ApiResponse({ status: 200, description: 'Contract found', type: Contract })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not found' })
