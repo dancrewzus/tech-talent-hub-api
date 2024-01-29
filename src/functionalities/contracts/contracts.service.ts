@@ -358,7 +358,9 @@ export class ContractsService {
                     daysPayed++
                   }
                 } else {
-                  daysLate++
+                  if(!aheadPayments.length) {
+                    daysLate++
+                  }
                 }
               }
   
@@ -378,13 +380,15 @@ export class ContractsService {
                     daysIncomplete++
                   }
                 } else {
-                  daysLate++
+                  if(!aheadPayments.length) {
+                    daysLate++
+                  }
                 }
               }
             }
             indexPayments++
           }
-  
+
           // Dias anticipados
           if(aheadPayments.length) {
             const lastPayment = aheadPayments[aheadPayments.length - 1]
@@ -394,7 +398,7 @@ export class ContractsService {
               daysAhead++
             }
           }
-  
+
           // Dias expirados
           pendingAmount = contract.totalAmount - payed
           const contractEndDate = paymentDays[paymentDays.length - 1]
@@ -410,10 +414,19 @@ export class ContractsService {
           daysAhead > 0 ||
           daysLate > 0
         ) {
+
+          // if(clientData.id === '65948c56f75796c52384b10b') {
+          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysIncomplete:", daysIncomplete)
+          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysPending:", daysPending)
+          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysExpired:", daysExpired)
+          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysAhead:", daysAhead)
+          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysLate:", daysLate)
+          // }
+
           let icon = 'x-circle' 
           let color = '' 
           
-          if(daysLate > 0) {
+          if(daysLate > 0 && daysAhead === 0) {
             color = daysLate <= 1 ? '' : (daysLate === 2 ? 'orange' : 'red')
             totalUnpaid += 1
           }
@@ -427,6 +440,7 @@ export class ContractsService {
             icon = 'check'
             color = 'green'
             totalAhead += 1
+            daysLate = 0
           }
           
           if(todayIncomplete) {
@@ -451,6 +465,7 @@ export class ContractsService {
               incomplete: daysIncomplete, // Parcelas restantes
               remaining: payments - daysPayed, // Parcelas restantes
               daysExpired,
+              daysAhead,
               icon,
               color,
             }

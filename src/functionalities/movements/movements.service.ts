@@ -419,11 +419,17 @@ export class MovementsService {
 
       // Contracts related
 
-      const activeContracts = await this.contractModel
-        .find({ status: true })
-        .sort({ createdAt: 'asc' })
-        .populate('paymentList')
-        .populate('movementList')
+      const activeContracts = id === 'general'
+        ? await this.contractModel
+          .find({ status: true })
+          .sort({ createdAt: 'asc' })
+          .populate('paymentList')
+          .populate('movementList')
+        : await this.contractModel
+          .find({ status: true, createdBy: id })
+          .sort({ createdAt: 'asc' })
+          .populate('paymentList')
+          .populate('movementList')
 
       let amountToBeCollected = 0
       let amountContractsFromToday = 0
