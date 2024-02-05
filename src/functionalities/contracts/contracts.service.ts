@@ -391,12 +391,16 @@ export class ContractsService {
 
           // Dias anticipados
           if(aheadPayments.length) {
-            const lastPayment = aheadPayments[aheadPayments.length - 1]
-            const createdAt = dayjs(lastPayment.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
-            const isPayedBefore = createdAt.isBefore(today, 'date')
-            if(lastPayment.status && isPayedBefore) {
-              daysAhead++
-            }
+            const groupByDate = []
+            aheadPayments.forEach((payment) => {
+              if(payment.status) {
+                const index = groupByDate.findIndex((pay) => pay.paymentDate === payment.paymentDate)
+                if(index === -1) {
+                  groupByDate.push(payment)
+                }
+              }
+            });
+            daysAhead = groupByDate.length
           }
 
           // Dias expirados
@@ -407,6 +411,14 @@ export class ContractsService {
           }
         }
         
+        // if(clientData.id === '65948c56f75796c52384b10b') {
+        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysIncomplete:", daysIncomplete)
+        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysPending:", daysPending)
+        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysExpired:", daysExpired)
+        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysAhead:", daysAhead)
+        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysLate:", daysLate)
+        // }
+        
         if(
           daysIncomplete > 0 || 
           daysPending > 0 || 
@@ -415,13 +427,6 @@ export class ContractsService {
           daysLate > 0
         ) {
 
-          // if(clientData.id === '65948c56f75796c52384b10b') {
-          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysIncomplete:", daysIncomplete)
-          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysPending:", daysPending)
-          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysExpired:", daysExpired)
-          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysAhead:", daysAhead)
-          //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysLate:", daysLate)
-          // }
 
           let icon = 'x-circle' 
           let color = '' 
@@ -889,6 +894,9 @@ export class ContractsService {
 
         movementPaymentAmount -= payed
         paymentNumber++
+
+        movement.paymentList = []
+        await movement.save()
       }
     }
 
@@ -906,8 +914,11 @@ export class ContractsService {
         for (let index = 0; index < newPayments.length; index++) {
           const payment = newPayments[index];
           const created = await this.paymentModel.create(payment)
+          const movement = await this.movementModel.findOne({ _id: payment.movement }).populate('paymentList')
           lastContract.paymentList.push(created)
+          movement.paymentList.push(created)
           await lastContract.save()
+          await movement.save()
         }
       } catch (error) {
         console.log("🚀 ~ file: contracts.service.ts:755 ~ ContractsService ~ recalculateLastContract= ~ error:", error)

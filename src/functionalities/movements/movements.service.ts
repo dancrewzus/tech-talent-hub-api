@@ -199,18 +199,13 @@ export class MovementsService {
 
         movementPaymentAmount -= payed
         paymentNumber++
+
+        movement.paymentList = []
+        await movement.save()
       }
     }
 
     const totalPayed = newPayments.reduce((amount, payment) => amount + payment.amount, 0)
-
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ totalPayed:", totalPayed)
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ payed:", payed)
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments.length:", newPayments.length)
-    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ movementList:", movementList)
-    // console.log("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-    // console.log("🚀 ~ file: contracts.service.ts:776 ~ ContractsService ~ recalculateLastContract= ~ newPayments:", newPayments)
     
     if(payed === totalPayed) {
       try {
@@ -224,9 +219,11 @@ export class MovementsService {
         for (let index = 0; index < newPayments.length; index++) {
           const payment = newPayments[index];
           const created = await this.paymentModel.create(payment)
+          const movement = await this.movementModel.findOne({ _id: payment.movement }).populate('paymentList')
           lastContract.paymentList.push(created)
+          movement.paymentList.push(created)
           await lastContract.save()
-          // console.log("🚀 ~ file: contracts.service.ts:793 ~ ContractsService ~ recalculateLastContract= ~ created:", created)
+          await movement.save()
         }
       } catch (error) {
         console.log("🚀 ~ file: contracts.service.ts:755 ~ ContractsService ~ recalculateLastContract= ~ error:", error)
@@ -630,7 +627,7 @@ export class MovementsService {
     
     const role = userRequest.role?.name
 
-    if(!role || !['root', 'admin'].includes(role) ) {
+    if(!role || !['root', 'admin', 'collector'].includes(role) ) {
       this.handleErrors.handleExceptions({
         code: 401,
         message: 'No tienes permisos para realizar esta acción.'
