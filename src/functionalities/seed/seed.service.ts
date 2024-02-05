@@ -112,8 +112,8 @@ export class SeedService {
         modalities,
         contracts, 
         movements,
-        payments,
         holidays,
+        payments,
         images,
         roles,
         users
@@ -128,6 +128,16 @@ export class SeedService {
         this.roleModelProduction.find(),
         this.userModelProduction.find(),
       ])
+
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", geolocation)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", modalities)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", contracts)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", movements)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", payments)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", holidays)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", images)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", roles)
+      // console.log("🚀 ~ SeedService ~ cloneDatabase= ~ geolocation:", users)
 
       await Promise.all([
         this.geolocationModel.deleteMany(),
