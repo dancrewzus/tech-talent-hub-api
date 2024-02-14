@@ -31,13 +31,21 @@ export class Modality extends Document {
   @Prop({ type: String, required: true })
   value: string;
 
+  @ApiProperty({ type: String, description: 'Payment method', example: 'daily' })
+  @Prop({ type: String, required: true, enum: [ 'daily', 'weekly' ] })
+  type: string;
+
   @ApiProperty({ type: Number, description: 'Percent', example: 10 })
   @Prop({ type: Number, required: true })
   percent: number;
 
   @ApiProperty({ type: Number, description: 'Days', example: 4 })
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number, default: 1 })
   days: number;
+  
+  @ApiProperty({ type: Number, description: 'Weeks', example: 2 })
+  @Prop({ type: Number, default: 1 })
+  weeks: number;
 
   @ApiProperty({ type: Boolean, description: 'Accept days off?', example: true })
   @Prop({ type: Boolean, default: false })

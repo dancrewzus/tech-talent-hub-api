@@ -57,7 +57,7 @@ export class CreateUserDto {
     required: false,
   })
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   @IsOptional() 
   role?: string
 
