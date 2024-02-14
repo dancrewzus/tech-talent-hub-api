@@ -128,9 +128,9 @@ export class MovementsController {
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   pendingCount(
-    // @GetUser() user: User
+    @GetUser() user: User
   ) {
-    return this.movementsService.pendingCount(/* user */);
+    return this.movementsService.pendingCount(user);
   }
 
   // @Get(':id')

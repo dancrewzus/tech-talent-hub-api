@@ -270,7 +270,13 @@ export class ContractsService {
   public findPendingPayments = async (userRequest: User) => {
 
     try {
-      const contracts = await this.contractModel.find({ status: true, createdBy: userRequest.id })
+
+      const isAdmin = ['root', 'admin'].includes(userRequest?.role?.name)
+
+      const contracts = await this.contractModel.find({ 
+          status: true, 
+          createdBy: isAdmin ? { $exists: true } : userRequest.id,
+        })
         .sort({ createdAt: 'asc' })
         .populate({ path: 'client' })
         .populate({ path: 'paymentList' })
@@ -303,7 +309,9 @@ export class ContractsService {
         let daysIncomplete = 0
         let indexPayments = 0
         let pendingAmount = 0
+        let todayMustPay = 0
         let todayIncomplete = false
+        let todayHavePayments = false
         
         if(clientData.isActive) {
 
@@ -345,6 +353,7 @@ export class ContractsService {
                 const paymentsFromToday = havePayments ? paymentList?.filter((payment) => payment.paymentDate === today.format('DD/MM/YYYY')) : []
                 if (paymentsFromToday.length) {
                   let sum = 0
+                  todayHavePayments = true
                   paymentsFromToday.forEach((payment) => {
                     sum += payment.amount
                     if(!payment.status) {
@@ -357,6 +366,7 @@ export class ContractsService {
                   } else {
                     daysPayed++
                   }
+                  todayMustPay += sum
                 } else {
                   if(!aheadPayments.length) {
                     daysLate++
@@ -379,6 +389,7 @@ export class ContractsService {
                   } else {
                     daysIncomplete++
                   }
+                  todayMustPay += sum
                 } else {
                   if(!aheadPayments.length) {
                     daysLate++
@@ -412,11 +423,14 @@ export class ContractsService {
         }
         
         // if(clientData.id === '65948c56f75796c52384b10b') {
-        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysIncomplete:", daysIncomplete)
-        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysPending:", daysPending)
-        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysExpired:", daysExpired)
-        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysAhead:", daysAhead)
-        //   console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysLate:", daysLate)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysIncomplete:", daysIncomplete)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysPending:", daysPending)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysExpired:", daysExpired)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysAhead:", daysAhead)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ daysLate:", daysLate)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ payed:", payed)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ todayMustPay:", todayMustPay)
+          // console.log("🚀 ~ ContractsService ~ paymentsFromAhead.forEach ~ todayHavePayments:", todayHavePayments)
         // }
         
         if(
@@ -457,24 +471,26 @@ export class ContractsService {
             totalPending += 1
           }
 
-          pendingArray.push({
-            client: this.formatReturnClientData(clientData),
-            contractData: {
-              loanAmount: contract.loanAmount, // Monto del prestamos
-              amount: contract.totalAmount, // Monto total del contrato
-              payed: payed, // Lo que ha pagado
-              pending: pendingAmount, // Lo que le falta
-              payment: paymentAmount, // Valor de la parcela
-              late: daysLate, // Parcelas atrasadas
-              upToDate: daysPayed, // Parcelas al día
-              incomplete: daysIncomplete, // Parcelas restantes
-              remaining: payments - daysPayed, // Parcelas restantes
-              daysExpired,
-              daysAhead,
-              icon,
-              color,
-            }
-          })
+          if(!todayHavePayments || (payed < todayMustPay)) {
+            pendingArray.push({
+              client: this.formatReturnClientData(clientData),
+              contractData: {
+                loanAmount: contract.loanAmount, // Monto del prestamos
+                amount: contract.totalAmount, // Monto total del contrato
+                payed: payed, // Lo que ha pagado
+                pending: pendingAmount, // Lo que le falta
+                payment: paymentAmount, // Valor de la parcela
+                late: daysLate, // Parcelas atrasadas
+                upToDate: daysPayed, // Parcelas al día
+                incomplete: daysIncomplete, // Parcelas restantes
+                remaining: payments - daysPayed, // Parcelas restantes
+                daysExpired,
+                daysAhead,
+                icon,
+                color,
+              }
+            })
+          }
         }
       }
       
@@ -559,7 +575,7 @@ export class ContractsService {
 
       const today = dayjs.tz()
       const lastContract = contractsByUser[0];
-
+      
       const isOutdated = lastContract.isOutdated
       const movementList = [] 
       const paymentList = []
@@ -595,6 +611,7 @@ export class ContractsService {
 
       const contractCreatedDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
       const contractInitDate = dayjs(lastContract.createdAt, 'DD/MM/YYYY HH:mm:ss').tz()
+      const contractModality = lastContract.modality || ''
       const totalPayments = lastContract.payments || 0
       const daysOff = lastContract.nonWorkingDays || ''
       const amount = lastContract.paymentAmount || 0
@@ -621,7 +638,7 @@ export class ContractsService {
         const isBefore = date.isBefore(today)
         const isToday = date.isSame(today, 'date')
         const isAhead = date.isAfter(today)
-        let isPayDay = !daysOff?.includes(parsedDay) && !isSameContractDate
+        let isPayDay = (contractModality === 'daily' ? !daysOff?.includes(parsedDay) : daysOff?.includes(parsedDay)) && !isSameContractDate
         const haveMovements = movementList.filter((mov) => mov.movementDate === date.format('DD/MM/YYYY'))
         const formattedDate = date.format('DD/MM/YYYY')
         const isHoliday = holidaysDates?.includes(formattedDate)

@@ -341,7 +341,7 @@ export class MovementsService {
     try {
       const today = dayjs.tz().format('DD/MM/YYYY')
 
-      const role = userRequest.role?.name
+      const role = userRequest.role?.baseModelName
       let workers: any[] = []
 
       if(['root', 'admin'].includes(role)) {
@@ -527,15 +527,30 @@ export class MovementsService {
 
     const role = userRequest.role?.name
 
-  if(!role || !['root', 'admin', 'collector'].includes(role)) {
+    if(!role || !['root', 'admin', 'collector'].includes(role)) {
       this.handleErrors.handleExceptions({
         code: 401,
         message: 'No tienes permisos para realizar esta acción.'
       })
     }
 
+    const isAdmin = ['root', 'admin'].includes(userRequest?.role?.name)
+
     try {
-      const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
+      let movements = []
+      const allMovements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture').populate('contract')
+      
+      if(!isAdmin) {
+        const contracts = await this.contractModel.find({ 
+          status: true, 
+          createdBy: userRequest.id,
+        }).select('id')
+        const contractsIds = contracts.map(c => c.id)
+        movements = allMovements.filter((mov) => contractsIds.includes(mov.contract.id))
+
+      } else {
+        movements = allMovements
+      }
       
       let todayAmount = 0
 
@@ -554,7 +569,7 @@ export class MovementsService {
     }
   }
   
-  public pendingCount = async (/* userRequest: User */) => {
+  public pendingCount = async (userRequest: User) => {
 
     // const role = userRequest.role?.name
 
@@ -565,8 +580,23 @@ export class MovementsService {
     //   })
     // }
 
+    const isAdmin = ['root', 'admin'].includes(userRequest?.role?.name)
+
     try {
-      const movements = await this.movementModel.find({ status: 'pending' }).sort({ createdAt: 'asc' }).populate('paymentPicture')
+      let movements = []
+      const allMovements = await this.movementModel.find({ status: 'pending' }).populate('contract')
+      
+      if(!isAdmin) {
+        const contracts = await this.contractModel.find({ 
+          status: true, 
+          createdBy: userRequest.id,
+        }).select('id')
+        const contractsIds = contracts.map(c => c.id)
+        movements = allMovements.filter((mov) => contractsIds.includes(mov.contract.id))
+
+      } else {
+        movements = allMovements
+      }
 
       return {
         data: movements.length,
