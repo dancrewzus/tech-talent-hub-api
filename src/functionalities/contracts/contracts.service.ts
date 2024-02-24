@@ -456,8 +456,6 @@ export class ContractsService {
           daysAhead > 0 ||
           daysLate > 0
         ) {
-
-
           let icon = 'x-circle' 
           let color = '' 
           
@@ -486,7 +484,6 @@ export class ContractsService {
           if(daysPending > 0) {
             totalPending += 1
           }
-
           if(!todayHavePayments || (payed < todayMustPay)) {
             pendingArray.push({
               client: this.formatReturnClientData(clientData),
