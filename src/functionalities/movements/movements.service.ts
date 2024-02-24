@@ -337,7 +337,7 @@ export class MovementsService {
     }
   }
 
-  public dailyResume= async (id: string, userRequest: User) => {
+  public dailyResume = async (id: string, userRequest: User) => {
     try {
       const today = dayjs.tz().format('DD/MM/YYYY')
 
@@ -674,11 +674,6 @@ export class MovementsService {
 
       const { paymentList, contract } = movement
 
-      const contractExist = await this.contractModel
-        .findOne({ _id: contract._id, status: true })
-        .populate('client')
-        .populate('paymentList')
-
       for (let index = 0; index < paymentList.length; index++) {
         const payment = paymentList[index];
         payment.status = true
@@ -689,6 +684,11 @@ export class MovementsService {
 
       // Validate if contract is all payed
 
+      const contractExist = await this.contractModel
+        .findOne({ _id: contract._id, status: true })
+        .populate('client')
+        .populate('movementList')
+
       const clientId = new BSON.ObjectId( contractExist?.client?._id )
       const clientExist = await this.userModel.findById(clientId)
       // console.log("🚀 ~ file: movements.service.ts:513 ~ MovementsService ~ validateMovement= ~ clientExist:", clientExist)
@@ -697,14 +697,12 @@ export class MovementsService {
         throw new BadRequestException(`Ha ocurrido un error al encontrar el contrato o cliente`)
       }
 
-      let payments = 0
-      for(const payment of contractExist?.paymentList) {
-        payments = payments + payment.amount
-      }
+      const pendingMovements = contractExist?.movementList.filter((movement) => movement.status === 'pending')
+      const totalPayed = contractExist?.movementList.reduce((amount, payment) => amount + payment.amount, 0)
 
-      if(!contractExist.isOutdated && payments === contractExist.totalAmount) {
+      if(totalPayed === contractExist.totalAmount && pendingMovements.length === 0) {
         contractExist.status = false
-        clientExist.points = clientExist.points + 1
+        clientExist.points = !contractExist.isOutdated ? clientExist.points + 1 : clientExist.points - 1
         await contractExist.save()
         await clientExist.save()
       }

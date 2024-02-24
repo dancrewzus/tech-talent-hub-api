@@ -226,6 +226,22 @@ export class ContractsService {
       if(!clientExist) {
         throw new BadRequestException(`Cliente incorrecto`)
       }
+
+      const allContractsByUser = await this.contractModel
+        .find({ client: clientExist.id })
+        .sort({ createdAt: 'asc' })
+        .populate('createdBy')
+        .populate('paymentList')
+        .populate('movementList')
+
+      const activeContracts = allContractsByUser.filter((contract) => contract.status)
+
+      if(activeContracts.length) {
+        throw {
+          code: 3000,
+          message: `El cliente posee contratos activos, verifique los contratos del cliente`,
+        }
+      }
       
       const contract = await this.contractModel.create({
         createdBy: userRequest.id,
@@ -543,8 +559,9 @@ export class ContractsService {
       for (let index = 0; index < activeContracts.length; index++) {
         const contract = activeContracts[index];
         const validatedMovements = contract.movementList.filter((movement) => movement.status === 'validated')
+        const pendingMovements = contract?.movementList.filter((movement) => movement.status === 'pending')
         const payed = validatedMovements.reduce((sum, mov) => sum + mov.amount, 0);
-        if(payed === contract.totalAmount) {
+        if(payed === contract.totalAmount && pendingMovements.length === 0) {
           contract.status = false
           client.points = !contract.isOutdated ? client.points + 1 : client.points - 1
           await contract.save()
@@ -555,7 +572,6 @@ export class ContractsService {
       }
 
       if(!contractsByUser.length) {
-        // throw new NotFoundException(`Contracts of user "${ clientId }" not found`)
         return {
           data: {
             haveActiveContracts: false,
