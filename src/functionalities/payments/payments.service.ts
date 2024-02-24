@@ -108,6 +108,7 @@ export class PaymentsService {
     const payed = movementList.reduce((amount, movement) => amount + movement.amount, 0)
     const newPayments = []
 
+    let havePendingMovement = false
     let paymentNumber = 1
     for (let index = 0; index < movementList.length; index++) {
       const movement = await this.movementModel.findOne({ _id: movementList[index]?.id });
@@ -169,15 +170,16 @@ export class PaymentsService {
         movement.paymentList = []
         await movement.save()
       }
+
+      if(!havePendingMovement) {
+        havePendingMovement = movement.status === 'pending' ? true : false
+      }
     }
 
     const totalPayed = newPayments.reduce((amount, payment) => amount + payment.amount, 0)
-    console.log("🚀 ~ PaymentsService ~ recalculateLastContract= ~ totalPayed:", totalPayed)
-    console.log("🚀 ~ PaymentsService ~ recalculateLastContract= ~ payed:", payed)
     
     if(payed === totalPayed) {
       try {
-        console.log("🚀 ~ PaymentsService ~ recalculateLastContract= ~ paymentsToDelete:", paymentsToDelete)
         for (let index = 0; index < paymentsToDelete.length; index++) {
           const paymentId = paymentsToDelete[index];
           await this.paymentModel.deleteOne({ _id: paymentId })
@@ -185,19 +187,17 @@ export class PaymentsService {
           await lastContract.save()
         }
 
-        console.log("🚀 ~ PaymentsService ~ recalculateLastContract= ~ newPayments:", newPayments)
         for (let index = 0; index < newPayments.length; index++) {
           const payment = newPayments[index];
           const created = await this.paymentModel.create(payment)
           const movement = await this.movementModel.findOne({ _id: payment.movement }).populate('paymentList')
-          console.log("🚀 ~ PaymentsService ~ recalculateLastContract= ~ movement:", movement)
           lastContract.paymentList.push(created)
           movement.paymentList.push(created)
           await lastContract.save()
           await movement.save()
         }
 
-        if(totalPayed === lastContract.totalAmount) {
+        if(totalPayed === lastContract.totalAmount && !havePendingMovement) {
           lastContract.status = false
           client.points = !lastContract.isOutdated ? client.points + 1 : client.points - 1
           await lastContract.save()
@@ -281,6 +281,15 @@ export class PaymentsService {
 
       //   totalAmount += Number.parseInt(`${ amount }`)
       // }
+
+      const movementExist = contractExist?.movementList.find((mov) => mov.amount === amount && mov.movementDate === now.format('DD/MM/YYYY'))
+
+      if(movementExist !== undefined) {
+        throw {
+          code: 3000,
+          message: `El movimiento ya fue ingresado, verifique los movimientos del cliente`,
+        }
+      }
 
       // MOVEMENT CREATE
       const movement = await this.movementModel.create({
