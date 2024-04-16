@@ -3,6 +3,15 @@
   <img title="JavaScript" src="https://res.cloudinary.com/idepixel/image/upload/c_scale,h_100,w_200/v1683961930/parental_advisory_nerd.webp"/>
 </p>
 
+<hr>
+<p align="center">
+  UNIVERSIDAD NACIONAL EXPERIMENTAL DE GUAYANA<br>
+  Virrectorado Académico<br>
+  Coordinación General de Pregrado<br>
+  Ingeniería Informática<br>
+  Desarrollo Web
+</p>
+
 # INDEX
 
 * [¿WHAT IS TECH TALENT HUB?](#what-is)
