@@ -12,7 +12,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Manaus')
+dayjs.tz.setDefault('America/Bogota')
 
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
@@ -26,59 +26,32 @@ export class User extends Document {
     description: 'User email.',
     uniqueItems: true
   })
-  email?: string;
+  email: string;
   
-  @Prop({ type: String, required: true, unique: true })
-  cpf: string;
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
 
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: String, required: false, default: '' })
+  @Prop({ type: String, default: '' })
   recoveryCode: string;
-  
-  @Prop({ type: Boolean, required: false, default: true })
-  isActive: boolean;
-  
-  @Prop({ type: Boolean, required: false, default: false })
-  isLogged: boolean;
 
   /**
    * USER DATA
    */
-
-  @Prop({ type: String, required: true })
-  gender: string;
   
   @Prop({ type: String, required: true })
-  firstName: string;
-
-  @Prop({ type: String, required: false, default: '' })
-  secondName?: string;
+  name: string;
 
   @Prop({ type: String, required: true })
-  paternalSurname: string;
+  surname: string;
 
-  @Prop({ type: String, required: false, default: '' })
-  maternalSurname: string;
-
-  @Prop({ type: String, required: false, default: '01/01/1900' })
-  birthDate: string;
-  
-  @Prop({ type: String, required: true })
-  residenceAddress: string;
-  
-  @Prop({ type: String, required: true })
-  billingAddress: string;
-  
   @Prop({ type: String, required: true })
   phoneNumber: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', default: null, nullable: true })
   profilePicture: Image;
-  
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', required: false, default: null })
-  addressPicture: Image;
 
   // END USER DATA
 
@@ -89,6 +62,10 @@ export class User extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   createdBy: User;
 
+  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Deletion date.' })
+  @Prop({ type: String, default: null, nullable: true })
+  deletedAt?: string;
+  
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
   @Prop({ type: String, required: true })
   createdAt?: string;
@@ -96,12 +73,9 @@ export class User extends Document {
   @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
   @Prop({ type: String, required: true })
   updatedAt?: string;
-  
-  @Prop({ type: Object, required: false })
-  geolocation?: any;
 
-  @Prop({ type: Number, required: true })
-  points: number;
+  @Prop({ type: Boolean, default: false })
+  deleted: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass( User )

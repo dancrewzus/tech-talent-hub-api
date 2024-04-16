@@ -17,7 +17,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Manaus')
+dayjs.tz.setDefault('America/Bogota')
 
 // END DATE MANAGEMENT
 

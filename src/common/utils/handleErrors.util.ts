@@ -7,6 +7,20 @@ import {
   UnprocessableEntityException
 } from '@nestjs/common'
 
+import * as customParseFormat from 'dayjs/plugin/customParseFormat'
+import * as timezone from 'dayjs/plugin/timezone'
+import * as utc from 'dayjs/plugin/utc'
+
+import * as dayjs from 'dayjs'
+
+dayjs.extend(customParseFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
+
+dayjs.tz.setDefault('America/Bogota')
+
+const DATE_TIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';
+
 @Injectable()
 export class HandleErrors {
 
@@ -21,7 +35,7 @@ export class HandleErrors {
   }
   
   public handleExceptions = (error: any): never => {
-    console.log("🚀 ~ file: handleErrors.util.ts:24 ~ HandleErrors ~ error:", error)
+    console.error("Error:", error)
     const code = error.code || error.status
 
     switch (code) {
@@ -32,5 +46,12 @@ export class HandleErrors {
       case 3000: throw new UnprocessableEntityException(error.message)
       default: throw new InternalServerErrorException(`An internal error has occurred: ${ error.message }`)
     }
+  }
+
+  public handleError = (errorMessage): never => {
+    console.error(`[${dayjs().format(DATE_TIME_FORMAT)}] - ${errorMessage}`);
+    // TODO Implement Datadog tracking here
+    throw new Error(errorMessage)
+
   }
 }

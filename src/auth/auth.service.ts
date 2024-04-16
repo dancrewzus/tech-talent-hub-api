@@ -44,26 +44,17 @@ export class AuthService {
       : ''
       
     return {
-      token: this.getJwtToken({ id: `${ user.id }`, cpf: `${ user.cpf }` }),
+      token: this.getJwtToken({ id: `${ user.id }`, email: `${ user.email }` }),
       user: {
         permission,
         id: user.id,
-        cpf: user.cpf,
         email: user.email,
-        isLogged: user.isLogged,
-        fullname: `${ this.capitalizeFirstLetter(user.firstName) } ${ this.capitalizeFirstLetter(user.paternalSurname) }` || '',
-        firstName: this.capitalizeFirstLetter(user.firstName) || '',
-        secondName: this.capitalizeFirstLetter(user.secondName) || '',
-        paternalSurname: this.capitalizeFirstLetter(user.paternalSurname) || '',
-        maternalSurname: this.capitalizeFirstLetter(user.maternalSurname) || '',
-        birthDate: user.birthDate || '',
+        fullname: `${ this.capitalizeFirstLetter(user.name) } ${ this.capitalizeFirstLetter(user.surname) }` || '',
+        name: this.capitalizeFirstLetter(user.name) || '',
+        surname: this.capitalizeFirstLetter(user.surname) || '',
         profilePicture: user.profilePicture?.imageUrl || '',
-        addressPicture: user.addressPicture?.imageUrl || '',
-        residenceAddress: user.residenceAddress || '',
-        billingAddress: user.billingAddress || '',
         phoneNumber: user.phoneNumber || '',
         role: user.role?.name || '',
-        gender: user.gender || '',
       },
     }
   }
@@ -93,14 +84,6 @@ export class AuthService {
       }
       if(!user.isActive) {
         throw new UnauthorizedException('Inactive user')
-      }
-      if(!user.isLogged) {
-        await this.userModel.updateOne(
-          { _id: user._id },
-          {
-            isLogged: true
-          }
-        )
       }
       return this.formatReturnData(user)
     } catch (error) {

@@ -3,6 +3,9 @@ const generateDBUri = (user: string, password: string, cluster: string, database
 }
 
 export default () => ({
+  // OPEN API
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  openAIOrgKey: process.env.OPENAI_ORG_KEY,
   // MONGODB
   mongoConnection: generateDBUri(process.env.MONGODB_USER, process.env.MONGODB_PASSWORD, process.env.MONGODB_CLUSTER, ''),
   mongoConnectionTest: generateDBUri(process.env.MONGODB_USER, process.env.MONGODB_PASSWORD, process.env.MONGODB_CLUSTER, process.env.MONGODB_NAME_TEST),
@@ -22,5 +25,5 @@ export default () => ({
   // GENERAL
   environment: process.env.STAGE || 'dev',
   defaultLimit: process.env.DEFAULT_LIMIT || 10,
-  port: process.env.PORT || 3000,
+  port: process.env.PORT || 3001,
 })

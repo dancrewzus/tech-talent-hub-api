@@ -18,11 +18,10 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Manaus')
+dayjs.tz.setDefault('America/Bogota')
 
 // END DATE MANAGEMENT
 
-import { Geolocation } from '../movements/entities/location.entity';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 // import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Image } from '../images/entities/image.entity';
@@ -36,7 +35,6 @@ export class UsersService {
   private defaultLimit: number;
 
   constructor(
-    @InjectModel(Geolocation.name, 'default') private readonly locationModel: Model<Geolocation>,
     @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
     @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
@@ -73,26 +71,13 @@ export class UsersService {
     return {
       permission,
       id: user.id,
-      cpf: user.cpf,
-      email: user.email,
-      isActive: user.isActive,
-      isLogged: user.isLogged,
-      fullname: `${ this.capitalizeFirstLetter(user.firstName) } ${ this.capitalizeFirstLetter(user.paternalSurname) }` || '',
-      firstName: this.capitalizeFirstLetter(user.firstName) || '',
-      secondName: this.capitalizeFirstLetter(user.secondName) || '',
-      paternalSurname: this.capitalizeFirstLetter(user.paternalSurname) || '',
-      maternalSurname: this.capitalizeFirstLetter(user.maternalSurname) || '',
-      birthDate: user.birthDate || '',
-      profilePicture: user.profilePicture?.imageUrl || '',
-      addressPicture: user.addressPicture?.imageUrl || '',
-      residenceAddress: user.residenceAddress || '',
-      billingAddress: user.billingAddress || '',
-      phoneNumber: user.phoneNumber || '',
-      role: user.role?.name || '',
-      gender: user.gender || '',
-      points: user.points || 0,
-      geolocation: user.geolocation || {},
-      createdBy: user.createdBy ? this.formatReturnData(user.createdBy) : null,
+        email: user.email,
+        fullname: `${ this.capitalizeFirstLetter(user.name) } ${ this.capitalizeFirstLetter(user.surname) }` || '',
+        name: this.capitalizeFirstLetter(user.name) || '',
+        surname: this.capitalizeFirstLetter(user.surname) || '',
+        profilePicture: user.profilePicture?.imageUrl || '',
+        phoneNumber: user.phoneNumber || '',
+        role: user.role?.name || '',
     }
   }
 
@@ -144,7 +129,6 @@ export class UsersService {
 
       user.role = databaseRole
       user.profilePicture = databaseProfilePicture
-      user.addressPicture = databaseAddressPicture
 
       return this.formatReturnData(user)
 
@@ -280,7 +264,7 @@ export class UsersService {
         }
       }
       
-      count = await this.userModel.count(data)
+      count = await this.userModel.countDocuments(data)
       clients = await this.userModel.find(data)
         .skip( setOffset )
         .limit( setLimit )
@@ -289,32 +273,6 @@ export class UsersService {
         .populate('createdBy')
         .populate('profilePicture')
         .populate('addressPicture')
-
-      if(clients.length) {
-        for (let index = 0; index < clients.length; index++) {
-          const client = clients[index];
-          client.geolocation = {
-            latitude: 0,
-            longitude: 0
-          }
-          const locations = await this.locationModel.find({ client: client._id })
-          // console.log("🚀 ~ file: users.service.ts:296 ~ UsersService ~ findClients= ~ locations:", locations)
-          if(locations.length) {
-            let clientLastLocation = null
-            locations.forEach((location) => {
-              if(location.latitude !== 0 && location.longitude !== 0) {
-                clientLastLocation = location
-              }
-            });
-            if(clientLastLocation) {
-              client.geolocation = {
-                latitude: clientLastLocation.latitude,
-                longitude: clientLastLocation.longitude
-              }
-            }
-          }
-        }
-      }
 
       return {
         data: clients.map((user) => this.formatReturnData(user)),
@@ -387,13 +345,15 @@ export class UsersService {
   }
 
   public update = async (search: string, updateUserDto: UpdateUserDto) => {
-    const user = await this.findOne(search)
-    try {
-      await user.updateOne(updateUserDto)
-      return { ...user.toJSON(), ...updateUserDto }
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
+    console.log("🚀 ~ UsersService ~ update= ~ updateUserDto:", updateUserDto)
+    console.log("🚀 ~ UsersService ~ update= ~ search:", search)
+    // const user = await this.findOne(search)
+    // try {
+    //   await user.updateOne(updateUserDto)
+    //   return { ...user.toJSON(), ...updateUserDto }
+    // } catch (error) {
+    //   this.handleErrors.handleExceptions(error)
+    // }
   }
 
   public resetPassword = async (id: string) => {
@@ -405,7 +365,7 @@ export class UsersService {
       await this.userModel.updateOne(
         { _id: user.id },
         { 
-          password: bcrypt.hashSync(`${ user.cpf.toLowerCase().trim() }`, 10),
+          password: bcrypt.hashSync(`${ user.email.toLowerCase().trim() }`, 10),
           isLogged: false,
         });
 
@@ -422,54 +382,6 @@ export class UsersService {
       if(deletedCount === 0)
         throw new NotFoundException(`User with id "${ id }" not found`)
       return
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
-  }
-
-  public assignInitPoints = async () => {
-    const databaseRole = await this.roleService.findOne('client' as string)
-    if(!databaseRole) {
-      throw new NotFoundException(`Role with name "client" not found`)
-    }
-    try {
-      const clients = await this.userModel.find({
-        role: databaseRole.id,
-        isActive: true
-      })
-
-      if(clients.length) {
-        for (let index = 0; index < clients.length; index++) {
-          const client = clients[index];
-          if(!client.points || client.points === 0) {
-            client.points = 2
-            await client.save()
-          }
-        }
-      }
-
-      return 'Points assigned'
-    } catch (error) {
-      this.handleErrors.handleExceptions(error)
-    }
-  }
-
-  public clearUsers = async () => {
-    try {
-      const databaseRole = await this.roleService.findOne('client' as string)
-      const clients = await this.userModel.find({ role: databaseRole.id, isActive: true })
-      const validNames = ['natali', 'henato', 'jefferson']
-      if(clients.length) {
-        for (let index = 0; index < clients.length; index++) {
-          const client = clients[index];
-          const isValidClient = validNames.includes(client.firstName.toLowerCase())
-          if(!isValidClient) {
-            client.isActive = false
-            await client.save()
-          }
-        }
-      }
-      return 'User deleted'
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
