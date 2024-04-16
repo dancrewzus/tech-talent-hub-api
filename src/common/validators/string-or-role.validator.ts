@@ -1,4 +1,4 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import { registerDecorator, ValidationOptions } from 'class-validator';
 
 export function IsStringOrRole(validationOptions?: ValidationOptions) {
   return (object: any, propertyName: string) => {
@@ -9,7 +9,7 @@ export function IsStringOrRole(validationOptions?: ValidationOptions) {
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: any) {
           return typeof value === 'object' || typeof value === 'string' || typeof value === undefined;
         },
       },

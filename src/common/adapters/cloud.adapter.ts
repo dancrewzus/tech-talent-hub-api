@@ -33,7 +33,7 @@ export class CloudAdapter {
    */
   public uploadImage = async (base64: string, type: string): Promise<any> => {
     try {
-      const folder = `rentmies-${type}`; // clients, properties, users
+      const folder = `tech-talent-hub-${type}`; // clients, properties, users
       const response = await cloudinary.uploader.upload(base64, { folder });
       return {
         imageUrl: response.secure_url,

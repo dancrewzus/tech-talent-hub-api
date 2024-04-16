@@ -18,7 +18,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Bogota')
+dayjs.tz.setDefault('America/Caracas')
 
 // END DATE MANAGEMENT
 
@@ -51,7 +51,6 @@ export class UsersService {
       case 'root': return 'Rt';
       case 'admin': return 'Adm';
       case 'client': return 'Clt';
-      case 'collector': return 'Cll';
       default: return '';
     }
   }
@@ -83,7 +82,7 @@ export class UsersService {
 
   private searchType = (search: string | number): string => {
     if(isValidObjectId(search)) return 'id'
-    if(!isNaN(Number(search))) return 'cpf'
+    // if() return 'email' TODO: Validate email with regex
     return 'invalid'
   }
   
@@ -91,7 +90,7 @@ export class UsersService {
     try {
       
       const now = dayjs.tz()
-      const { cpf, role, password, email, profilePicture, addressPicture, ...data } = createUserDto;
+      const { role, password, email, profilePicture, ...data } = createUserDto;
       const databaseRole = await this.roleService.findOne(role as string || 'client' as string)
       if(!databaseRole) {
         throw new NotFoundException(`Role with id or name "${ role }" not found`)
@@ -105,22 +104,12 @@ export class UsersService {
         }
       }
 
-      let databaseAddressPicture = null
-      if(addressPicture !== '') {
-        databaseAddressPicture = await this.imageModel.findOne({ _id : addressPicture })
-        if(!databaseAddressPicture) {
-          throw new NotFoundException(`Image with id "${ addressPicture }" not found`)
-        }
-      }
-
       const user = await this.userModel.create({
-        password: bcrypt.hashSync(`${ password ? password : cpf }`, 10),
+        password: bcrypt.hashSync(`${ password ? password : email }`, 10),
         createdBy: userRequest.id,
         role: databaseRole.id,
         profilePicture: databaseProfilePicture?.id || null,
-        addressPicture: databaseAddressPicture?.id || null,
         email,
-        cpf,
         createdAt: now.format('DD/MM/YYYY HH:mm:ss'),
         updatedAt: now.format('DD/MM/YYYY HH:mm:ss'),
         points: databaseRole.name === 'client' ? 2 : 0,
@@ -206,7 +195,6 @@ export class UsersService {
         .populate(this.populateRole)
         .populate('createdBy')
         .populate('profilePicture')
-        .populate('addressPicture')
 
       const list = users.map((client) => this.formatReturnData(client)).filter((el) => el !== null)
 
@@ -272,7 +260,6 @@ export class UsersService {
         .populate(this.populateRole)
         .populate('createdBy')
         .populate('profilePicture')
-        .populate('addressPicture')
 
       return {
         data: clients.map((user) => this.formatReturnData(user)),
@@ -294,14 +281,12 @@ export class UsersService {
                     .populate(this.populateRole)
                     .populate('createdBy')
                     .populate('profilePicture')
-                    .populate('addressPicture')
             break;
           case 'cpf':
             user = await this.userModel.findOne({ cpf: search.toLocaleLowerCase() })
                     .populate(this.populateRole)
                     .populate('createdBy')
                     .populate('profilePicture')
-                    .populate('addressPicture')
             break;
           default:
             user = null;

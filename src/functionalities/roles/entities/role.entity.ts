@@ -12,7 +12,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Bogota')
+dayjs.tz.setDefault('America/Caracas')
 
 import { User } from '../../users/entities/user.entity';
 

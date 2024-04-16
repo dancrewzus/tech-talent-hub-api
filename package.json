@@ -1,12 +1,12 @@
 {
-  "name": "rentmies",
-  "version": "0.0.1",
-  "description": "Rentmies API",
-  "author": "Daniel Rodriguez",
+  "name": "tech-talent-hub",
+  "version": "1.0.0",
+  "description": "Plataforma intuitiva y eficiente para el reclutamiento de talento IT.",
+  "author": "Estudiantes de la materia Desarrollo Web | UNEG 2024",
   "private": true,
   "license": "MIT",
   "engines": {
-    "node": "18.x"
+    "node": "18.x || 20"
   },
   "scripts": {
     "build": "nest build",

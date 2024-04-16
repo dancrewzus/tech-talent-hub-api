@@ -14,7 +14,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Bogota')
+dayjs.tz.setDefault('America/Caracas')
 
 // END DATE MANAGEMENT
 
@@ -54,19 +54,32 @@ export class SeedData {
 
   public getUsers = () => [
     {
-      email: 'root@retmies.com',
-      cpf: '123456789',
-      password: 'ROOTrentmies_24',
-      role: 'root',
+      email: 'adumbledore@howarts.magic',
+      password: 'ADumbledore_1881',
+      role: 'collector',
       gender: 'system',
-      firstName: 'Super',
-      secondName: '',
-      paternalSurname: 'User',
+      firstName: 'Albus',
+      secondName: 'Percival',
+      paternalSurname: 'Dumbledore',
       maternalSurname: '',
-      birthDate: '01/01/1900',
-      residenceAddress: 'Amin',
-      billingAddress: 'Amin',
-      phoneNumber: 'Admin',
+      birthDate: '01/08/1881',
+      address: 'Hogwarts',
+      phoneNumber: '123456789',
+      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+    },
+    {
+      email: 'hpotter@howarts.magic',
+      password: 'Nimbus_2000',
+      role: 'client',
+      gender: 'system',
+      firstName: 'Harry',
+      secondName: '',
+      paternalSurname: 'Potter',
+      maternalSurname: '',
+      birthDate: '31/07/1980',
+      address: 'Privet Drive Nro. 4',
+      phoneNumber: '123456789',
       createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
       updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
     },

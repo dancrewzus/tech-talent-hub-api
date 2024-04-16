@@ -5,9 +5,9 @@ export class LoginResponseDto {
 
   @ApiProperty()
   @IsString()
-  id: String
+  id: string
   
   @ApiProperty()
   @IsString()
-  token: String
+  token: string
 }

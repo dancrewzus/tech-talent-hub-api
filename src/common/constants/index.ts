@@ -1,8 +1,8 @@
 export const app = {
   assistants: {
     TESTING_ASSISTANT: true,
-    MAIN_ASSISTANT_NAME: 'rentmies',
-    CONVERSATIONAL_ASSISTANT_NAME: 'rentmies_chat',
+    MAIN_ASSISTANT_NAME: 'tech-talent-hub',
+    CONVERSATIONAL_ASSISTANT_NAME: 'tech-talent-hub_chat',
   },
   execution: {
     COMPLETION_CHECK_TIME: 1500,

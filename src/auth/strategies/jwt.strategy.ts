@@ -8,6 +8,7 @@ import { Model } from 'mongoose';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { HandleErrors } from 'src/common/utils/handleErrors.util';
 import { User } from 'src/functionalities/users/entities/user.entity';
+import { error } from 'src/common/constants/error-messages';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -31,10 +32,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         .populate({ path: 'role', select: 'name' })
 
       if(!user) {
-        throw new UnauthorizedException('Token inválido')
+        throw new UnauthorizedException(error.INVALID_TOKEN)
       }
       if(!user.isActive) {
-        throw new UnauthorizedException('El usuario está inactivo')
+        throw new UnauthorizedException(error.USER_INACTIVE)
       }
       
       return user

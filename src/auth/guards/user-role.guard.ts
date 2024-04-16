@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
+import { error } from 'src/common/constants/error-messages';
 import { META_ROLES } from '../decorators/role-protected.decorator';
 
 @Injectable()
@@ -28,10 +29,10 @@ export class UserRoleGuard implements CanActivate {
     const req = ctx.switchToHttp().getRequest();
     const user = req.user;
     if(!user) {
-      throw new InternalServerErrorException('User in request not found.')
+      throw new InternalServerErrorException(error.USER_NOT_FOUND)
     }
     if(!validRoles.includes(user.role.name)) {
-      throw new ForbiddenException(`User doesn't have access to this endpoint`)
+      throw new ForbiddenException(error.USER_WITHOUT_ACCESS)
     }
     return true;
     

@@ -12,7 +12,7 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Bogota')
+dayjs.tz.setDefault('America/Caracas')
 
 // Constants for date and date-time formats
 const DATE_TIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';

@@ -17,13 +17,12 @@ dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
-dayjs.tz.setDefault('America/Bogota')
+dayjs.tz.setDefault('America/Caracas')
 
 // END DATE MANAGEMENT
 
 import { HandleErrors } from '../../common/utils/handleErrors.util'
 import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
-import { PaginationDto } from 'src/common/dto/pagination.dto'
 import { CreateImageDto } from './dto/create-image.dto'
 import { User } from '../users/entities/user.entity'
 import { Image } from './entities/image.entity'
@@ -67,38 +66,5 @@ export class ImagesService {
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
-  }
-
-  public findAll = async (paginationDto: PaginationDto) => {
-    // const { limit = this.defaultLimit, offset = 0 } = paginationDto;
-    // try {
-    //   return await this.imageModel.find()
-    //     .limit( limit )
-    //     .skip( offset )
-    //     .sort({ createdAt: 'asc' })
-    //     .populate({ path: 'user' })
-    // } catch (error) {
-    //   this.handleErrors.handleExceptions(error)
-    // }
-  }
-
-  public findOne = async (search: string) => {
-    // console.log("🚀 ~ file: contracts.service.ts:127 ~ ContractsService ~ findOne= ~ search:", search)
-    // try {
-    //   const contractById = await this.imageModel.findById(search)
-    //   if(!contractById) {
-    //     throw new NotFoundException(`Contract with id "${ search }" not found`)
-    //   }
-    //   return contractById;
-    // } catch (error) {
-    //   this.handleErrors.handleExceptions(error)
-    // }
-  }
-
-  public remove = async (id: string) => {
-    // const { modifiedCount } = await this.imageModel.updateOne({ _id: id }, { status: false })
-    // if(modifiedCount === 0)
-    //   throw new NotFoundException(`Contract with id "${ id }" not found.`)
-    // return
   }
 }

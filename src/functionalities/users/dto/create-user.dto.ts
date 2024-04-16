@@ -15,15 +15,6 @@ export enum genders {
   female = 'female',
 }
 export class CreateUserDto {
-
-  @ApiProperty({
-    example: '33467854390',
-    description: 'User CPF (Cadastro de Pessoas Físicas).',
-    required: true,
-  })
-  @IsString()
-  @MinLength(5)
-  cpf: string
   
   @ApiProperty({
     example: 'adumbledore@howarts.magic',
@@ -88,8 +79,8 @@ export class CreateUserDto {
   maternalSurname?: string
   
   @ApiProperty({
-    example: 'Dumbledore',
-    description: 'User lastname.',
+    example: '01/08/1881',
+    description: 'User birth date.',
   })
   @IsString()
   @IsOptional()
@@ -110,30 +101,14 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   profilePicture?: string
-  
-  @ApiProperty({
-    example: '',
-    description: 'User address picture ID.',
-  })
-  @IsString()
-  @IsOptional()
-  addressPicture?: string
 
   @ApiProperty({
-    example: 'Privet Drive Nro. 4',
+    example: 'Hogwarts',
     description: 'User residence address.',
   })
   @IsString()
   @MinLength(2)
-  residenceAddress: string
-
-  @ApiProperty({
-    example: 'Hogwarts',
-    description: 'User billing address.',
-  })
-  @IsString()
-  @MinLength(2)
-  billingAddress: string
+  address: string
   
   @ApiProperty({
     example: '123456789',

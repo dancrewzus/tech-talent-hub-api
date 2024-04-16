@@ -4,17 +4,17 @@ import { IsString, MaxLength, MinLength } from "class-validator"
 export class LoginDto {
   
   @ApiProperty({
-    example: '334.678.543-90',
-    description: 'CPF del usuario.',
+    example: 'hpotter@howarts.magic',
+    description: 'User email',
     required: true,
   })
   @IsString()
   @MinLength(4)
-  cpf: string
+  email: string
   
   @ApiProperty({
-    example: 'ADumbledore_1881',
-    description: 'Contraseña del usuario.',
+    example: 'Nimbus_2000',
+    description: 'User password',
   })
   @IsString()
   @MinLength(4)
