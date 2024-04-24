@@ -5,7 +5,9 @@ import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
 import { SeedModule } from './seed/seed.module'
 import { ChatModule } from './chat/chat.module'
+import { NotificationsModule } from './notifications/notifications.module';
 import { LogsModule } from './logs/logs.module'
+
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { LogsModule } from './logs/logs.module'
     UsersModule,
     ImagesModule,
     ChatModule,
+    NotificationsModule,
   ],
   exports: [ ],
 })
