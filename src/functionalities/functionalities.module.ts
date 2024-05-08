@@ -5,12 +5,12 @@ import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
 import { SeedModule } from './seed/seed.module'
 import { NotificationsModule } from './notifications/notifications.module';
-import { LogsModule } from './logs/logs.module'
+import { TracksModule } from './tracks/tracks.module'
 
 
 @Module({
   imports: [
-    LogsModule,
+    TracksModule,
     SeedModule,
     RolesModule,
     UsersModule,
