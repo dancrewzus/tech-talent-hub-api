@@ -40,17 +40,17 @@ export class AuthController {
 
   @Post('change-password')
   @ApiResponse({ status: 200, description: 'Password changed.', type: LoginResponseDto })
-  @ApiResponse({ status: 400, description: 'Bad request. CPF or password not satisfied some conditions.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Invalid credentials. CPF or password are invalid.', type: ErrorResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
   changePassword(@Body() passwordDto: PasswordDto) {
     return this.authService.changePassword(passwordDto)
   }
   
   @Post('reset-password')
-  @ApiResponse({ status: 200, description: 'Password changed.', type: LoginResponseDto })
-  @ApiResponse({ status: 400, description: 'Bad request. CPF or password not satisfied some conditions.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Invalid credentials. CPF or password are invalid.', type: ErrorResponseDto })
+  @ApiResponse({ status: 200, description: 'Request for reset password sended.', type: LoginResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
   resetPassword(@Body() passwordDto: PasswordDto) {
     return this.authService.resetPassword(passwordDto)
@@ -58,13 +58,17 @@ export class AuthController {
 
   @Get('check-status')
   @Auth()
+  @ApiResponse({ status: 200, description: 'Check user status', type: LoginResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
+  @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
   checkAthStatus(
     @GetUser() user: User
   ) {
     return this.authService.checkAuthStatus(user)
   }
 
-  @Get('private')
+  @Get('private-test')
   @Auth()
   testPrivateRoute(
     @GetUser() user: User
