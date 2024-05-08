@@ -2,9 +2,6 @@ import * as Joi from 'joi';
 
 export const JoiValidationSchema = Joi.object({
   STAGE: Joi.required(),
-  // OPENAI
-  OPENAI_API_KEY: Joi.required(),
-  OPENAI_ORG_KEY: Joi.required(),
   // MONGODB
   MONGODB_USER: Joi.required(),
   MONGODB_PASSWORD: Joi.required(),
