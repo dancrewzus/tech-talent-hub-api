@@ -15,7 +15,14 @@ export class CloudAdapter {
   }
 
   /**
-   * Initializes the Cloudinary configuration.
+   * Initializes the Cloudinary instance with configuration settings pulled from environment-specific settings.
+   * This method is typically called at the start of the application to set up the Cloudinary library for subsequent
+   * operations involving image uploads, transformations, and other media-related tasks. The configuration includes
+   * the cloud name, API key, and API secret which are essential for authenticating API requests to Cloudinary.
+   *
+   * @private
+   * @function initInstance
+   * @returns {void} This method does not return any value. It configures the Cloudinary service for use throughout the application.
    */
   private initInstance = (): void => {
     cloudinary.config({ 
@@ -33,6 +40,7 @@ export class CloudAdapter {
    */
   public uploadImage = async (base64: string, type: string): Promise<any> => {
     try {
+      this.initInstance();
       const folder = `tech-talent-hub-${type}`; // clients, properties, users
       const response = await cloudinary.uploader.upload(base64, { folder });
       return {
@@ -45,7 +53,7 @@ export class CloudAdapter {
         height: response.height,
       };
     } catch (error) {
-      this.errors.handleError(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.errors.handleError(`Failed to upload image: ${error ? error.error.message : 'Unknown error'}`);
     }
   }
 
@@ -54,9 +62,10 @@ export class CloudAdapter {
    */
   public deleteAllResources = async (): Promise<void> => {
     try {
+      this.initInstance()
       await cloudinary.api.delete_all_resources();
     } catch (error) {
-      this.errors.handleError(`Failed to delete all images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.errors.handleError(`Failed to delete all images: ${error ? error.error.message : 'Unknown error'}`);
     }
   }
   
@@ -66,9 +75,10 @@ export class CloudAdapter {
    */
   public deleteResource = async (publicId: string): Promise<void> => {
     try {
+      this.initInstance()
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-      this.errors.handleError(`Failed to delete an images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.errors.handleError(`Failed to delete an images: ${error ? error.error.message : 'Unknown error'}`);
     }
   }
 
