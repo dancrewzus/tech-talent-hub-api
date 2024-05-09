@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common'
+import { Controller, Post, Body, Get, Ip } from '@nestjs/common'
 import { ApiResponse, ApiTags } from '@nestjs/swagger'
 
 import { User } from 'src/functionalities/users/entities/user.entity'
@@ -25,8 +25,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto)
+  login(
+    @Ip() clientIp: string,
+    @Body() loginDto: LoginDto
+  ) {
+    return this.authService.login(loginDto, clientIp)
   }
   
   @Post('register')
@@ -34,8 +37,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
   @ApiResponse({ status: 404, description: 'Not found exception. Primary role not found.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto)
+  register(
+    @Ip() clientIp: string,
+    @Body() createUserDto: CreateUserDto
+  ) {
+    return this.authService.register(createUserDto, clientIp)
   }
 
   @Post('change-password')
@@ -43,8 +49,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  changePassword(@Body() passwordDto: PasswordDto) {
-    return this.authService.changePassword(passwordDto)
+  changePassword(
+    @Ip() clientIp: string,
+    @Body() passwordDto: PasswordDto
+  ) {
+    return this.authService.changePassword(passwordDto, clientIp)
   }
   
   @Post('reset-password')
@@ -52,8 +61,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request. Email or password not satisfied some conditions.', type: ErrorResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  resetPassword(@Body() passwordDto: PasswordDto) {
-    return this.authService.resetPassword(passwordDto)
+  resetPassword(
+    @Ip() clientIp: string,
+    @Body() passwordDto: PasswordDto
+  ) {
+    return this.authService.resetPassword(passwordDto, clientIp)
   }
 
   @Get('check-status')
@@ -63,18 +75,21 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid credentials. Email or password are invalid.', type: ErrorResponseDto })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
   checkAthStatus(
+    @Ip() clientIp: string,
     @GetUser() user: User
   ) {
-    return this.authService.checkAuthStatus(user)
+    return this.authService.checkAuthStatus(user, clientIp)
   }
 
   @Get('private-test')
   @Auth()
   testPrivateRoute(
+    @Ip() clientIp: string,
     @GetUser() user: User
   ) {
     return {
       message: "It's leviousa!",
+      ip: clientIp,
       user,
     }
   }

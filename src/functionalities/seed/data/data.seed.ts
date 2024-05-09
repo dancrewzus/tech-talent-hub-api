@@ -1,30 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common"
 
-/**
- * DATE MANAGEMENT
- */
-
-import * as customParseFormat from 'dayjs/plugin/customParseFormat'
-import * as timezone from 'dayjs/plugin/timezone'
-import * as utc from 'dayjs/plugin/utc'
-
-import * as dayjs from 'dayjs'
-
-dayjs.extend(customParseFormat)
-dayjs.extend(timezone)
-dayjs.extend(utc)
-
-dayjs.tz.setDefault('America/Caracas')
-
-// END DATE MANAGEMENT
+import { DayJSAdapter } from "src/common/adapters/dayjs.adapter"
 
 @Injectable()
 export class SeedData {
 
   private logger
-  private now = dayjs.tz()
 
-  constructor() {
+  constructor(
+    private readonly dayjs: DayJSAdapter,
+  ) {
     this.logger = new Logger('Seed Data')
   }
 
@@ -33,22 +18,22 @@ export class SeedData {
       name: 'root',
       primary: false,
       status: true,
-      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
-      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
     },
     {
       name: 'admin',
       primary: false,
       status: true,
-      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
-      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
     },
     {
       name: 'client',
       primary: true,
       status: true,
-      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
-      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
     },
   ]
 
@@ -56,7 +41,7 @@ export class SeedData {
     {
       email: 'adumbledore@howarts.magic',
       password: 'ADumbledore_1881',
-      role: 'collector',
+      role: 'root',
       gender: 'system',
       firstName: 'Albus',
       secondName: 'Percival',
@@ -64,15 +49,30 @@ export class SeedData {
       maternalSurname: '',
       birthDate: '01/08/1881',
       address: 'Hogwarts',
-      phoneNumber: '123456789',
-      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
-      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      phoneNumber: '654789321',
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
+    },
+    {
+      email: 'mmcgonagall@howarts.magic',
+      password: 'Animaga_1935',
+      role: 'admin',
+      gender: 'female',
+      firstName: 'Minerva',
+      secondName: '',
+      paternalSurname: 'McGonagall',
+      maternalSurname: '',
+      birthDate: '04/10/1935',
+      address: 'Caithness, Scotland',
+      phoneNumber: '987654321',
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
     },
     {
       email: 'hpotter@howarts.magic',
       password: 'Nimbus_2000',
       role: 'client',
-      gender: 'system',
+      gender: 'male',
       firstName: 'Harry',
       secondName: '',
       paternalSurname: 'Potter',
@@ -80,8 +80,24 @@ export class SeedData {
       birthDate: '31/07/1980',
       address: 'Privet Drive Nro. 4',
       phoneNumber: '123456789',
-      createdAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
-      updatedAt: this.now.format('DD/MM/YYYY HH:mm:ss'),
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
+    },
+    {
+      email: 'triddle@howarts.magic',
+      password: 'IAmVoldemort',
+      role: 'client',
+      gender: 'male',
+      firstName: 'Tom',
+      secondName: '',
+      paternalSurname: 'Riddle',
+      maternalSurname: '',
+      birthDate: '31/12/1926',
+      address: 'Albania Dark Forest',
+      phoneNumber: '456456456',
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
+      isActive: false,
     },
   ]
   
