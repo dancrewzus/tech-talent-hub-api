@@ -1,18 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
+import * as mongoosePaginate from 'mongoose-paginate-v2'
 import { ApiProperty } from '@nestjs/swagger';
-
-import * as customParseFormat from 'dayjs/plugin/customParseFormat'
-import * as timezone from 'dayjs/plugin/timezone'
-import * as utc from 'dayjs/plugin/utc'
-
-import * as dayjs from 'dayjs'
-
-dayjs.extend(customParseFormat)
-dayjs.extend(timezone)
-dayjs.extend(utc)
-
-dayjs.tz.setDefault('America/Caracas')
 
 import { Image } from 'src/functionalities/images/entities/image.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
@@ -31,29 +20,29 @@ export class User extends Document {
   @Prop({ type: Boolean, default: true })
   isActive: boolean;
 
+  @Prop({ type: Boolean, default: false })
+  isLogged: boolean;
+
   @Prop({ type: String, required: true })
   password: string;
 
   @Prop({ type: String, default: '' })
   recoveryCode: string;
-
-  /**
-   * USER DATA
-   */
   
   @Prop({ type: String, required: true })
   name: string;
 
   @Prop({ type: String, required: true })
   surname: string;
+  
+  @Prop({ type: String, required: true })
+  gender: string;
 
   @Prop({ type: String, required: true })
   phoneNumber: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Image', default: null, nullable: true })
   profilePicture: Image;
-
-  // END USER DATA
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Role', required: true })
   role: Role;
@@ -62,15 +51,15 @@ export class User extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   createdBy: User;
 
-  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Deletion date.' })
+  @ApiProperty({ example: '01/01/1900 00:00:00', description: 'Deletion date.' })
   @Prop({ type: String, default: null, nullable: true })
   deletedAt?: string;
   
-  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Creation date.' })
+  @ApiProperty({ example: '01/01/1900 00:00:00', description: 'Creation date.' })
   @Prop({ type: String, required: true })
   createdAt?: string;
   
-  @ApiProperty({ example: dayjs.tz().format('DD/MM/YYYY HH:mm:ss'), description: 'Updated date.' })
+  @ApiProperty({ example: '01/01/1900 00:00:00', description: 'Updated date.' })
   @Prop({ type: String, required: true })
   updatedAt?: string;
 
@@ -79,3 +68,4 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass( User )
+UserSchema.plugin(mongoosePaginate)

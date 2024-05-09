@@ -31,7 +31,7 @@ export class DayJSAdapter {
    */
   public getCurrentDate = (): string => {
     try {
-      return dayjs().format(DATE_FORMAT)
+      return dayjs().tz().format(DATE_FORMAT)
     } catch (error) {
       this.errors.handleError(`Error retrieving the current date: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
@@ -43,7 +43,7 @@ export class DayJSAdapter {
    */
   public getCurrentDateTime = (): string => {
     try {
-      return dayjs().format(DATE_TIME_FORMAT)
+      return dayjs().tz().format(DATE_TIME_FORMAT)
     } catch (error) {
       this.errors.handleError(`Error retrieving the current date and time: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }

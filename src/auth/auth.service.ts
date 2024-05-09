@@ -1,26 +1,31 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { JwtService } from '@nestjs/jwt';
-import { Model } from 'mongoose';
-import    * as bcrypt from 'bcrypt';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
+import { InjectModel } from '@nestjs/mongoose'
+import { JwtService } from '@nestjs/jwt'
+import { Model } from 'mongoose'
+import * as bcrypt from 'bcrypt'
 
-import { Utils } from 'src/common/utils/utils'
-import { HandleErrors } from 'src/common/utils/handleErrors.util'
 import { CreateUserDto } from 'src/functionalities/users/dto/create-user.dto'
-import { JwtPayload } from './interfaces/jwt-payload.interface'
+import { Track } from 'src/functionalities/tracks/entities/track.entity'
+import { LoginResponse } from './interfaces/login-response.interface'
 import { Role } from 'src/functionalities/roles/entities/role.entity'
 import { User } from 'src/functionalities/users/entities/user.entity'
+import { HandleErrors } from 'src/common/utils/handleErrors.util'
+import { DayJSAdapter } from 'src/common/adapters/dayjs.adapter'
+import { JwtPayload } from './interfaces/jwt-payload.interface'
 import { error } from 'src/common/constants/error-messages'
-import { LoginDto } from './dto/login.dto'
+import { Utils } from 'src/common/utils/utils'
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   
   constructor(
+    @InjectModel(Track.name, 'default') private readonly trackModel: Model<Track>,
     @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     @InjectModel(Role.name, 'default') private readonly roleModel: Model<Role>,
     private readonly handleErrors: HandleErrors,
     private readonly jwtService: JwtService,
+    private readonly dayjs: DayJSAdapter,
     private readonly utils: Utils,
   ) {}
 
@@ -53,24 +58,24 @@ export class AuthService {
     *            - phoneNumber: User's phone number, if available.
     *            - role: The name of the user's role.
     */
-  private formatReturnData = (user: User) => {
-  
+  private formatReturnData = (user: User): LoginResponse => {
     const permission: string = user.role 
       ? this.utils.getUserPermissions(user.role.name) 
       : ''
-      
     return {
       token: this.getJwtToken({ id: `${ user.id }`, email: `${ user.email }` }),
       user: {
         permission,
         id: user.id,
         email: user.email,
+        isLogged: user.isLogged || false,
         fullname: `${ this.utils.capitalizeFirstLetter(user.name) } ${ this.utils.capitalizeFirstLetter(user.surname) }` || '',
         name: this.utils.capitalizeFirstLetter(user.name) || '',
         surname: this.utils.capitalizeFirstLetter(user.surname) || '',
         profilePicture: user.profilePicture?.imageUrl || '',
         phoneNumber: user.phoneNumber || '',
         role: user.role?.name || '',
+        gender: user.gender || '',
       },
     }
   }
@@ -110,7 +115,7 @@ export class AuthService {
     * @throws UnauthorizedException - Throws this exception if the credentials are invalid, the user does not exist,
     *                                the password does not match, or the user is not active.
     */
-  public login = async (loginDto: LoginDto) => {
+  public login = async (loginDto: LoginDto, clientIp: string): Promise<LoginResponse> => {
     try {
       const { password, email } = loginDto;
       const user = await this.userModel
@@ -124,6 +129,13 @@ export class AuthService {
       if(!user.isActive) {
         throw new UnauthorizedException(error.USER_INACTIVE)
       }
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ user._id } has logged in.`,
+        module: 'Authentication',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user
+      })
       return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
@@ -142,7 +154,7 @@ export class AuthService {
     * @throws UnauthorizedException - Throws this exception if no user is found with the provided email, or the
     *                                user is not active, indicating that the operation cannot proceed.
     */
-  public resetPassword = async (loginDto: LoginDto) => {
+  public resetPassword = async (loginDto: LoginDto, clientIp: string): Promise<void> => {
     try {
       const { email } = loginDto;
       const user = await this.userModel
@@ -156,7 +168,13 @@ export class AuthService {
       await this.userModel.updateOne(
         { _id: user.id },
         { password: bcrypt.hashSync(`${ email }`, 10) });
-
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ user._id } has reset password.`,
+        module: 'Authentication',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user
+      })
       return
     } catch (error) {
       this.handleErrors.handleExceptions(error)
@@ -177,7 +195,7 @@ export class AuthService {
     *                                is not active, or if any other error occurs, indicating that the password change
     *                                cannot proceed.
     */
-  public changePassword = async (loginDto: LoginDto) => {
+  public changePassword = async (loginDto: LoginDto, clientIp: string): Promise<void> => {
     try {
       const { password, email } = loginDto;
       const user = await this.userModel
@@ -191,7 +209,13 @@ export class AuthService {
       await this.userModel.updateOne(
         { _id: user.id },
         { password: bcrypt.hashSync(`${ password }`, 10) });
-
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ user._id } has changed password.`,
+        module: 'Authentication',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user
+      })
       return
     } catch (error) {
       this.handleErrors.handleExceptions(error)
@@ -211,7 +235,7 @@ export class AuthService {
     * @throws NotFoundException - Throws this exception if the specified role or a primary role is not found,
     *                             indicating that the user cannot be registered without a valid role.
     */
-  public register = async (createUserDto: CreateUserDto) => {
+  public register = async (createUserDto: CreateUserDto, clientIp: string): Promise<LoginResponse> => {
     try {
       const { role, password, ...userData } = createUserDto;
       let roleId = null;
@@ -231,6 +255,13 @@ export class AuthService {
         role: roleId, 
         ...userData
       });
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ user._id } has created.`,
+        module: 'Authentication',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user
+      })
       return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
@@ -250,8 +281,15 @@ export class AuthService {
     *         and handleExceptions, but generally, this could include any exceptions related to data formatting
     *         or handling.
     */
-  public checkAuthStatus = async (user: User) => {
+  public checkAuthStatus = async (user: User, clientIp: string): Promise<LoginResponse> => {
     try {
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ user._id } has checked.`,
+        module: 'Authentication',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user
+      })
       return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
