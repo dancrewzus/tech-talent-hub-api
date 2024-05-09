@@ -83,6 +83,22 @@ export class SeedData {
       createdAt:this.dayjs.getCurrentDateTime(),
       updatedAt:this.dayjs.getCurrentDateTime(),
     },
+    {
+      email: 'triddle@howarts.magic',
+      password: 'IAmVoldemort',
+      role: 'client',
+      gender: 'male',
+      firstName: 'Tom',
+      secondName: '',
+      paternalSurname: 'Riddle',
+      maternalSurname: '',
+      birthDate: '31/12/1926',
+      address: 'Albania Dark Forest',
+      phoneNumber: '456456456',
+      createdAt:this.dayjs.getCurrentDateTime(),
+      updatedAt:this.dayjs.getCurrentDateTime(),
+      isActive: false,
+    },
   ]
   
 }
