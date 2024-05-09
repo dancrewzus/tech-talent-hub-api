@@ -8,4 +8,5 @@ export const error = {
   ROLE_NOT_FOUND: 'Role not found.',
   NOTIFICATION_NOT_FOUND: 'Notification not found.',
   NOTIFICATION_NOT_ACCESS: "You don't have access to see this notification",
+  TRACK_NOT_ACCESS: "You don't have access to see tracks",
 }

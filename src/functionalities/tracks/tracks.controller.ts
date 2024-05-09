@@ -1,13 +1,14 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiResponse, ApiTags } from '@nestjs/swagger'
 
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { ValidRoles } from 'src/auth/interfaces/valid-roles';
+import { ErrorResponseDto } from 'src/common/dto/error-response.dto'
+import { GetUser } from 'src/auth/decorators/get-user.decorator'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
+import { ValidRoles } from 'src/auth/interfaces/valid-roles'
 import { Auth } from 'src/auth/decorators/auth.decorator'
-import { Track } from './entities/track.entity';
-
-import { TracksService } from './tracks.service';
-import { ErrorResponseDto } from 'src/common/dto/error-response.dto';
+import { User } from '../users/entities/user.entity'
+import { TracksService } from './tracks.service'
+import { Track } from './entities/track.entity'
 
 @ApiTags('Tracks')
 @Controller('tracks')
@@ -21,18 +22,10 @@ export class TracksController {
   @Get()
   @ApiResponse({ status: 200, description: 'Tracks list.', type: [Track] })
   @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.tracksService.findAll(paginationDto);
-  }
-
-  @Get(':type/:search')
-  @ApiResponse({ status: 200, description: 'Track found.', type: Track })
-  @ApiResponse({ status: 404, description: 'Not found', type: ErrorResponseDto })
-  @ApiResponse({ status: 500, description: 'Internal error.', type: ErrorResponseDto })
-  findOne(
-    @Param('type') type: string,
-    @Param('search') search: string,
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @GetUser() user: User
   ) {
-    return this.tracksService.findBy({ type, search });
+    return this.tracksService.findAll(paginationDto, user)
   }
 }
