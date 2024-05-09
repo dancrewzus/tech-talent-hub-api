@@ -8,15 +8,17 @@ export class UpdateUserDto {
     example: 'Albus',
     description: 'User name.',
   })
-  @IsString() 
-  firstName: string
+  @IsString()
+  @IsOptional()
+  name?: string
   
   @ApiProperty({
     example: 'Dumbledore',
     description: 'User lastname.',
   })
-  @IsString() 
-  paternalSurname: string
+  @IsString()
+  @IsOptional()
+  surname?: string
   
   @ApiProperty({
     example: 'male',
@@ -24,23 +26,8 @@ export class UpdateUserDto {
   })
   @IsString()
   @IsEnum(genders)
-  gender: string
-
-  @ApiProperty({
-    example: 'Privet Drive Nro. 4',
-    description: 'User residence address.',
-  })
-  @IsString()
-  @MinLength(2)
-  residenceAddress: string
-
-  @ApiProperty({
-    example: 'Hogwarts',
-    description: 'User billing address.',
-  })
-  @IsString()
-  @MinLength(2)
-  billingAddress: string
+  @IsOptional()
+  gender?: string
   
   @ApiProperty({
     example: '123456789',
@@ -48,7 +35,8 @@ export class UpdateUserDto {
   })
   @IsString()
   @MinLength(2)
-  phoneNumber: string
+  @IsOptional()
+  phoneNumber?: string
 
   @ApiProperty({
     example: 'adumbledore@howarts.magic',

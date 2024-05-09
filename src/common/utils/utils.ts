@@ -3,12 +3,44 @@ import { Injectable } from "@nestjs/common";
 @Injectable()
 export class Utils {
 
-  public convertToSlug = (string) => string.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
+  /**
+   * Converts a given string to a "slug" format suitable for URLs. The conversion involves
+   * lowercasing the entire string, replacing spaces with hyphens, and removing all non-alphanumeric
+   * characters except hyphens. This function is useful for creating clean and SEO-friendly URLs
+   * from titles or names.
+   *
+   * @public
+   * @function convertToSlug
+   * @param {string} string - The string to be converted into a slug.
+   * @returns {string} The slugified version of the input string, which is lowercased, with spaces
+   *                   replaced by hyphens, and stripped of all non-word characters.
+   */
+  public convertToSlug = (string: string): string => string.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
 
-  public timer = (ms) => new Promise(res => setTimeout(res, ms))
+  /**
+   * Creates a timer that completes after a specified number of milliseconds. This function is useful
+   * for delaying operations within async functions, akin to using `setTimeout` in asynchronous
+   * workflows. The returned Promise resolves after the specified delay, allowing the use of `await`
+   * for pausing execution in an async function.
+   *
+   * @public
+   * @function timer
+   * @param {number} ms - The number of milliseconds to delay.
+   * @returns {Promise<void>} A promise that resolves after the delay, effectively pausing execution
+   *                          for the specified period.
+   */
+  public timer = (ms: number): Promise<unknown> => new Promise(res => setTimeout(res, ms))
 
-  public extractContentResponse = (content: any): string => content?.text?.value || ''
-
+  /**
+   * Retrieves a shorthand permission code based on the user's role name. This utility function is used internally
+   * to simplify and standardize the representation of user permissions across the application. Each role is mapped
+   * to a specific shorthand that is returned when the role name matches a case in the switch statement.
+   *
+   * @private
+   * @function getUserPermissions
+   * @param {string} roleName - The name of the user role.
+   * @returns {string} The shorthand code for the given user role. Returns an empty string if no matching role is found.
+   */
   public getUserPermissions = (roleName: string): string => {
     switch (roleName) {
       case 'root': return 'Rt';
@@ -18,8 +50,33 @@ export class Utils {
     }
   }
 
-  public capitalizeFirstLetter = (str: string) => {
+  /**
+   * Capitalizes the first letter of a given string and returns the string with the initial letter capitalized
+   * while keeping the rest of the string as is. This function is useful for ensuring that user input such as
+   * names and titles are standardized in terms of capitalization, which can be important for UI display or data
+   * consistency.
+   *
+   * @public
+   * @function capitalizeFirstLetter
+   * @param {string} str - The string to capitalize.
+   * @returns {string} The modified string with the first letter capitalized.
+   */
+  public capitalizeFirstLetter = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * Validates an email address against a regular expression to ensure it conforms to a standard email format.
+   * The function uses a comprehensive regex pattern that covers a wide range of valid email characters, including
+   * normal alphanumeric characters, special characters within the username part, and a valid domain format.
+   *
+   * @param {string} email - The email address to validate.
+   * @returns {boolean} Returns true if the email matches the regex pattern, indicating it is a valid email address.
+   *                    Returns false otherwise.
+   */
+  public validateEmail = (email: string): boolean => {
+    const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return regex.test(email);
   }
 }
 

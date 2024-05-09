@@ -2,12 +2,22 @@ import { Module } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { Image, ImageSchema } from '../images/entities/image.entity';
-import { Role, RoleSchema } from '../roles/entities/role.entity';
-import { User, UserSchema } from '../users/entities/user.entity';
-import { CommonModule } from 'src/common/common.module';
+import { Notification, NotificationSchema } from '../notifications/entities/notification.entity';
+import { Image, ImageSchema } from '../images/entities/image.entity'
+import { Track, TrackSchema } from '../tracks/entities/track.entity'
+import { Role, RoleSchema } from '../roles/entities/role.entity'
+import { User, UserSchema } from '../users/entities/user.entity'
+import { CommonModule } from 'src/common/common.module'
 
 const MODELS = [
+  {
+    name: Notification.name,
+    schema: NotificationSchema
+  },
+  {
+    name: Track.name,
+    schema: TrackSchema
+  },
   {
     name: Role.name,
     schema: RoleSchema
