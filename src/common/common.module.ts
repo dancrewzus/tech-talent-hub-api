@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { AxiosAdapter } from './adapters/axios.adapter';
 import { CloudAdapter } from './adapters/cloud.adapter';
 import { DayJSAdapter } from './adapters/dayjs.adapter';
-import { TikTokenAdapter } from './adapters/tiktoken.adapter';
 
 import { Utils, HandleErrors } from './utils/utils';
 
@@ -12,7 +11,6 @@ import { Utils, HandleErrors } from './utils/utils';
     AxiosAdapter,
     CloudAdapter,
     DayJSAdapter,
-    TikTokenAdapter,
     HandleErrors,
     Utils
   ],
@@ -20,7 +18,6 @@ import { Utils, HandleErrors } from './utils/utils';
     AxiosAdapter,
     CloudAdapter,
     DayJSAdapter,
-    TikTokenAdapter,
     HandleErrors,
     Utils
   ],
