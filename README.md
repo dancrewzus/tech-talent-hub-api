@@ -62,21 +62,21 @@ You can download the application by copying its link, either by ssh or https. Th
 # HTTPS =====================================================!
 
 # Clone repository
-$ git clone https://github.com/dancrewzus/rev-v2.git
-$ cd rev-v2
+$ git clone https://github.com/dancrewzus/reb-v2.git
+$ cd reb-v2
 
 # If you want to download it with another folder name, example your-folder-name
-$ git clone https://github.com/dancrewzus/rev-v2.git your-folder-name
+$ git clone https://github.com/dancrewzus/reb-v2.git your-folder-name
 $ cd your-folder-name
 
 # SSH =======================================================!
 
 # Clone repository
-$ git clone git@github.com:dancrewzus/rev-v2.git
-$ cd rev-v2
+$ git clone git@github.com:dancrewzus/reb-v2.git
+$ cd reb-v2
 
 # If you want to download it with another folder name, example your-folder-name
-$ git clone git@github.com:dancrewzus/rev-v2.git your-folder-name
+$ git clone git@github.com:dancrewzus/reb-v2.git your-folder-name
 $ cd your-folder-name
 ```
 
