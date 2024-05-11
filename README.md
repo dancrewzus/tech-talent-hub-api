@@ -62,21 +62,21 @@ You can download the application by copying its link, either by ssh or https. Th
 # HTTPS =====================================================!
 
 # Clone repository
-$ git clone https://github.com/dancrewzus/reb-v2.git
-$ cd reb-v2
+$ git clone https://github.com/dancrewzus/tech-talent-hub-api.git
+$ cd tech-talent-hub-api
 
 # If you want to download it with another folder name, example your-folder-name
-$ git clone https://github.com/dancrewzus/reb-v2.git your-folder-name
+$ git clone https://github.com/dancrewzus/tech-talent-hub-api.git your-folder-name
 $ cd your-folder-name
 
 # SSH =======================================================!
 
 # Clone repository
-$ git clone git@github.com:dancrewzus/reb-v2.git
-$ cd reb-v2
+$ git clone git@github.com:dancrewzus/tech-talent-hub-api.git
+$ cd tech-talent-hub-api
 
 # If you want to download it with another folder name, example your-folder-name
-$ git clone git@github.com:dancrewzus/reb-v2.git your-folder-name
+$ git clone git@github.com:dancrewzus/tech-talent-hub-api.git your-folder-name
 $ cd your-folder-name
 ```
 
