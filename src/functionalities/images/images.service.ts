@@ -46,7 +46,7 @@ export class ImagesService {
         updatedAt: this.dayjs.getCurrentDateTime(),
         ...cloudResponse,
       });
-      return this.formatReturnData(image);
+      return this.formatReturnData(image)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

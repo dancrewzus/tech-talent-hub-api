@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { Model, PaginateModel, PaginateOptions } from 'mongoose'
+import { PaginateModel, PaginateOptions } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose'
 import { ConfigService } from '@nestjs/config'
 
@@ -15,7 +15,6 @@ export class TracksService {
 
   constructor(
     @InjectModel(Track.name, 'default') private readonly trackModel: PaginateModel<Track>,
-    @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     private readonly handleErrors: HandleErrors,
     private readonly configService: ConfigService,
   ) {
