@@ -47,9 +47,9 @@ export class CreateUserDto {
     description: 'Role ID.',
     required: false,
   })
+  @IsOptional()
   @IsString()
   @MinLength(4)
-  @IsOptional() 
   role?: string
 
   /**
