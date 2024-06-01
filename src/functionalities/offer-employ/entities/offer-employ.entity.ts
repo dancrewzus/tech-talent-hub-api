@@ -5,46 +5,45 @@ import { ApiProperty } from '@nestjs/swagger'
 import { User } from '../../users/entities/user.entity'
 
 @Schema()
-export class Role extends Document {
-    @ApiProperty({
-        example: 'Administrator',
-        description: 'Role name',
-        uniqueItems: true,
-    })
-    @Prop({ type: String, required: true, unique: true })
-    name: string
+export class Offer extends Document {
+    @Prop({ type: String, required: true })
+    title: string
 
-    @ApiProperty({ example: false, description: "It's used as default." })
-    @Prop({ type: Boolean, default: false })
-    primary: boolean
+    @Prop({ type: String, required: true })
+    position: string
 
-    @ApiProperty({ example: true, description: 'Is active?.' })
+    @Prop({ type: Number, required: true })
+    yearsOfExperience: number
+
+    @Prop({ type: String, required: true })
+    contract: string
+
+    @Prop({ type: String, required: true })
+    keywords: string
+
+    @Prop({ type: Number, required: true })
+    salary: number
+
+    @Prop({ type: String, required: true })
+    hiringDate: string
+
+    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+    createdBy: User
+
     @Prop({ type: Boolean, default: true })
     status: boolean
 
-    @ApiProperty({
-        example: '01/01/1900 00:00:00',
-        description: 'Creation date.',
-    })
     @Prop({ type: String, required: true })
     createdAt?: string
 
-    @ApiProperty({
-        example: '01/01/1900 00:00:00',
-        description: 'Updated date.',
-    })
     @Prop({ type: String, required: true })
     updatedAt?: string
 
-    @ApiProperty({
-        description: 'List of users that are related to this role.',
-        type: [String],
-    })
-    @Prop({
-        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-        select: false,
-    })
-    users: User[]
+    @Prop({ type: String, default: null, nullable: true })
+    deletedAt?: string
+
+    @Prop({ type: Boolean, default: false })
+    deleted: boolean
 }
 
-export const RoleSchema = SchemaFactory.createForClass(Role)
+export const OfferSchema = SchemaFactory.createForClass(Offer)
