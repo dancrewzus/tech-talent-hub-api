@@ -44,6 +44,12 @@ export class Offer extends Document {
 
     @Prop({ type: Boolean, default: false })
     deleted: boolean
+
+    @Prop({
+        type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }],
+        select: false,
+    })
+    users: User[]
 }
 
 export const OfferSchema = SchemaFactory.createForClass(Offer)
