@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 
+import { OffersModule } from './offers/offers.module'
 import { ImagesModule } from './images/images.module'
 import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
@@ -10,6 +11,7 @@ import { TracksModule } from './tracks/tracks.module'
 
 @Module({
   imports: [
+    OffersModule,
     TracksModule,
     SeedModule,
     RolesModule,
