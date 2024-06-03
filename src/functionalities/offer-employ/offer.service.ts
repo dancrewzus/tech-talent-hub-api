@@ -28,6 +28,28 @@ export class OfferService {
     }
 
     /**
+    * Returns an object containing the formatted offer data.
+    *
+    * @private
+    * @function formatReturnData
+    * @param {Offer} offer - The offer object to be formatted.
+    * @returns {OfferReturnData} - An object containing the formatted offer data.
+    */
+    private formatReturnData(offer: Offer): OfferReturnData {
+        return {
+            id: offer._id,
+            title: offer.title,
+            position: offer.position,
+            yearsOfExperience: offer.yearsOfExperience,
+            contract: offer.contract,
+            keywords: offer.keywords,
+            salary: offer.salary,
+            hiringDate: offer.hiringDate,
+            status: offer.status
+        }
+    }
+
+    /**
     * Creates a new offer in the database with specified data from CreateOfferDto, along with additional
     * audit and tracking information.
     *
