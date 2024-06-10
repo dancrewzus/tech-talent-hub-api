@@ -177,7 +177,6 @@ export class UsersService {
         description: `User ${ user._id } was created.`,
         module: 'Users',
         createdAt: this.dayjs.getCurrentDateTime(),
-        user: user.id
       })
       return this.formatReturnData(user)
     } catch (error) {
