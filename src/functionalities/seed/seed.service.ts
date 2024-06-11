@@ -51,12 +51,13 @@ export class SeedService {
   private seedAuthenticationData = async () => {
       await Promise.all([
         this.cloudAdapter.deleteAllResources(),
-        this.imageModel.deleteMany(),
-        this.roleModel.deleteMany(),
+        this.imageModelProduction.deleteMany(),
+        this.roleModelProduction.deleteMany(),
+        this.userModelProduction.deleteMany(),
       ])
       
       const rolesToInsert = this.seedData.getRoles()
-      const createdRoles = await this.roleModel.insertMany(rolesToInsert)
+      const createdRoles = await this.roleModelProduction.insertMany(rolesToInsert)
 
       this.logger.log('Roles seeded')
     
@@ -86,7 +87,7 @@ export class SeedService {
           })
         }
       }
-      await this.userModel.insertMany(usersToInsert)
+      await this.userModelProduction.insertMany(usersToInsert)
       this.logger.log('Users seeded')
   }
 
