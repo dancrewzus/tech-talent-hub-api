@@ -8,6 +8,7 @@ import { CategoriesController } from './offers.controller'
 import { CommonModule } from '../../common/common.module'
 import { OffersService } from './offers.service'
 import { AuthModule } from 'src/auth/auth.module'
+import { Category, CategorySchema } from '../categories/entities/category.entity';
 
 @Module({
   controllers: [ CategoriesController ],
@@ -24,6 +25,10 @@ import { AuthModule } from 'src/auth/auth.module'
       {
         name: Offer.name,
         schema: OfferSchema
+      },
+      {
+        name: Category.name,
+        schema: CategorySchema
       },
     ], 'default')
   ], 
