@@ -11,9 +11,9 @@ import { OffersService } from './offers.service';
 import { Offer } from './entities/offer.entity';
 import { User } from '../users/entities/user.entity';
 
-@ApiTags('Categories')
-@Controller('categories')
-export class CategoriesController {
+@ApiTags('Offers')
+@Controller('offers')
+export class OffersController {
 
   constructor(
     private readonly offersService: OffersService
