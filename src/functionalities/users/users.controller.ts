@@ -21,7 +21,6 @@ export class UsersController {
 
   @Post()
   @HttpCode(201)
-  @Auth()
   @ApiResponse({ status: 201, description: 'User created', type: User })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -30,9 +29,8 @@ export class UsersController {
   create(
     @Ip() clientIp: string,
     @Body() createUserDto: CreateUserDto,
-    @GetUser() user: User
   ) {
-    return this.usersService.create(createUserDto, user, clientIp);
+    return this.usersService.create(createUserDto, clientIp);
   }
 
   @Get()
