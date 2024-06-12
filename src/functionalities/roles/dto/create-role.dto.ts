@@ -5,9 +5,9 @@ export class CreateRoleDto {
   
   @IsString() 
   @ApiProperty({ example: 'Administrator', description: 'Role name.', uniqueItems: true })
-  name: String
+  name: string
   
   @IsBoolean() 
   @ApiProperty({ example: false, description: 'It\'s used as default.' })
-  primary: Boolean
+  primary: boolean
 }
