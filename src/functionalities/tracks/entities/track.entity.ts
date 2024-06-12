@@ -4,7 +4,6 @@ import { ApiProperty } from '@nestjs/swagger'
 import * as mongoosePaginate from 'mongoose-paginate-v2'
 
 import { User } from '../../users/entities/user.entity'
-import { IsOptional } from 'class-validator'
 
 @Schema()
 export class Track extends Document {
@@ -27,7 +26,6 @@ export class Track extends Document {
   
   @ApiProperty({ example: '654df2465ed4f4654edf', description: 'User that trigger track with API action' })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  @IsOptional()
   user: User
 }
 
