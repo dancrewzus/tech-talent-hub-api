@@ -6,35 +6,37 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles'
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersService } from './users.service';
-import { User } from './entities/user.entity';
+import { CreateOfferDto } from './dto/create-offer.dto';
+import { OffersService } from './offers.service';
+import { Offer } from './entities/offer.entity';
+import { User } from '../users/entities/user.entity';
 
-@ApiTags('Users')
-@Controller('users')
-export class UsersController {
+@ApiTags('Categories')
+@Controller('categories')
+export class CategoriesController {
 
   constructor(
-    private readonly usersService: UsersService
+    private readonly offersService: OffersService
   ) {}
 
   @Post()
   @HttpCode(201)
-  @ApiResponse({ status: 201, description: 'User created', type: User })
+  @Auth()
+  @ApiResponse({ status: 201, description: 'User created', type: Offer })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 422, description: 'Unprocessable entity' })
   @ApiResponse({ status: 500, description: 'Internal error' })
   create(
     @Ip() clientIp: string,
-    @Body() createUserDto: CreateUserDto,
+    @Body() createOfferDto: CreateOfferDto,
+    @GetUser() user: User
   ) {
-    return this.usersService.create(createUserDto, clientIp);
+    return this.offersService.create(createOfferDto, user, clientIp);
   }
 
   @Get()
-  @Auth(ValidRoles.Root, ValidRoles.Administrator)
+  @Auth()
   @ApiResponse({ status: 200, description: 'Users found', type: [User] })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -42,14 +44,13 @@ export class UsersController {
   @ApiResponse({ status: 500, description: 'Internal error.' })
   findAll(
     @Query('pagination') paginationDto: PaginationDto,
-    @Query('role') role: string,
   ) {
-    return this.usersService.findUsers(paginationDto, role);
+    return this.offersService.findOffers(paginationDto);
   }
 
   @Get(':search')
   @Auth()
-  @ApiResponse({ status: 200, description: 'User found', type: User })
+  @ApiResponse({ status: 200, description: 'User found', type: Offer })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not found' })
@@ -57,25 +58,12 @@ export class UsersController {
   findOne(
     @Param('search') search: string
   ) {
-    return this.usersService.findOne(search);
-  }
-  
-  @Get('/exist/:search')
-  @Auth(ValidRoles.Root, ValidRoles.Administrator)
-  @ApiResponse({ status: 200, description: 'User exist', type: Boolean })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found' })
-  @ApiResponse({ status: 500, description: 'Internal error.' })
-  clientExist(
-    @Param('search') search: string
-  ) {
-    return this.usersService.clientExist(search);
+    return this.offersService.findOne(search);
   }
 
   @Patch(':id')
   @Auth()
-  @ApiResponse({ status: 200, description: 'User updated', type: User })
+  @ApiResponse({ status: 200, description: 'User updated', type: Offer })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Not found' })
@@ -83,25 +71,10 @@ export class UsersController {
   update(
     @Ip() clientIp: string,
     @Param('id', ParseMongoIdPipe) id: string,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateCategoryDto: CreateOfferDto,
     @GetUser() user: User
   ) {
-    return this.usersService.update(id, updateUserDto, user, clientIp);
-  }
-
-  @Post('reset-password')
-  @ApiResponse({ status: 200, description: 'User password reset.' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found' })
-  @ApiResponse({ status: 500, description: 'Internal error.' })
-  resetPassword(
-    @Ip() clientIp: string,
-    @Body() data: any,
-    @GetUser() user: User
-  ) {
-    const { id } = data
-    return this.usersService.resetPassword(id, user, clientIp)
+    return this.offersService.update(id, updateCategoryDto, user, clientIp);
   }
 
   @Delete(':id')
@@ -116,6 +89,6 @@ export class UsersController {
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User
   ) {
-    return this.usersService.remove(id, user, clientIp);
+    return this.offersService.remove(id, user, clientIp);
   }
 }

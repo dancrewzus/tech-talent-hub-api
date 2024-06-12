@@ -18,6 +18,21 @@ export class Utils {
   public convertToSlug = (string: string): string => string.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
 
   /**
+   * Validates whether a given string conforms to a pattern suitable for URL slugs. The pattern ensures that the slug
+   * consists only of lowercase letters, numbers, and hyphens. This is useful for ensuring that generated or inputted
+   * slugs are compatible with URL standards and do not contain any invalid characters.
+   *
+   * @public
+   * @function isValidSlug
+   * @param {string} slug - The string to be validated as a slug.
+   * @returns {boolean} Returns true if the string is a valid slug according to the pattern, otherwise returns false.
+   */
+  public isValidSlug = (slug: string) => {
+    const slugPattern = /^[a-z0-9-]+$/;
+    return slugPattern.test(slug);
+  }
+
+  /**
    * Creates a timer that completes after a specified number of milliseconds. This function is useful
    * for delaying operations within async functions, akin to using `setTimeout` in asynchronous
    * workflows. The returned Promise resolves after the specified delay, allowing the use of `await`
