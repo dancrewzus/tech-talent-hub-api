@@ -55,12 +55,18 @@ export class JobsService {
         this.roleModelBackup.deleteMany(),
         this.userModelBackup.deleteMany(),
       ])
+
       await this.roleModelBackup.insertMany(roles)
       await this.userModelBackup.insertMany(users)
       await this.imageModelBackup.insertMany(images)
       await this.trackModelBackup.insertMany(tracks)
       await this.notificationModelBackup.insertMany(notifications)
-      // this.logger.debug('Executed at 00:10am every day.')
+
+      // const allData = [ ...notifications, ...tracks, ...images, ...users, ...roles ]
+      // TODO: Send allData to a JSON file. backup_11-05-24-07:21:00
+
+      // this.logger.debug('Executed at 01:10am an 01:10pm every day.')
+
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }

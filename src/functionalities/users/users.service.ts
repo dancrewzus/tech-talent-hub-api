@@ -167,7 +167,6 @@ export class UsersService {
         email,
         createdAt: this.dayjs.getCurrentDateTime(),
         updatedAt: this.dayjs.getCurrentDateTime(),
-        points: databaseRole.name === 'client' ? 2 : 0,
         ...data
       });
       user.role = databaseRole

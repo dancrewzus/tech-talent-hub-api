@@ -6,6 +6,8 @@ import { UsersModule } from './users/users.module'
 import { SeedModule } from './seed/seed.module'
 import { NotificationsModule } from './notifications/notifications.module';
 import { TracksModule } from './tracks/tracks.module'
+import { CategoriesModule } from './categories/categories.module'
+import { OffersModule } from './offers/offers.module'
 
 
 @Module({
@@ -16,6 +18,8 @@ import { TracksModule } from './tracks/tracks.module'
     UsersModule,
     ImagesModule,
     NotificationsModule,
+    CategoriesModule,
+    OffersModule,
   ],
   exports: [ ],
 })
