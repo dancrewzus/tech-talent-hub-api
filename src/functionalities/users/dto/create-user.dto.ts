@@ -61,22 +61,14 @@ export class CreateUserDto {
     description: 'User name.',
   })
   @IsString() 
-  firstName: string
-  
-  @IsString()
-  @IsOptional() 
-  secondName?: string
+  name: string
   
   @ApiProperty({
     example: 'Dumbledore',
     description: 'User lastname.',
   })
   @IsString() 
-  paternalSurname: string
-  
-  @IsString()
-  @IsOptional()
-  maternalSurname?: string
+  surname: string
   
   @ApiProperty({
     example: '01/08/1881',
@@ -108,6 +100,7 @@ export class CreateUserDto {
   })
   @IsString()
   @MinLength(2)
+  @IsOptional() 
   address: string
   
   @ApiProperty({

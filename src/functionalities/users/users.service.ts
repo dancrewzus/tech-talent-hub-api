@@ -142,12 +142,11 @@ export class UsersService {
    * @async
    * @function create
    * @param {CreateUserDto} createUserDto - Data transfer object containing the new user's data.
-   * @param {User} userRequest - The user object of the requester, used to set the `createdBy` field.
    * @param {string} clientIp - IP address from which the request originated, used for logging purposes.
    * @returns {Promise<UserReturnData>} A promise that resolves to the formatted user data upon successful creation.
    * @throws {NotFoundException} Throws this exception if the specified role or profile picture does not exist.
    */
-  public create = async (createUserDto: CreateUserDto, userRequest: User, clientIp: string): Promise<UserReturnData> => {
+  public create = async (createUserDto: CreateUserDto, clientIp: string): Promise<UserReturnData> => {
     try {
       const { role, password, email, profilePicture, ...data } = createUserDto;
       const databaseRole = await this.roleModel.findOne({ name: role as string || 'client' as string })
@@ -163,7 +162,6 @@ export class UsersService {
       }
       const user = await this.userModel.create({
         password: bcrypt.hashSync(`${ password ? password : email }`, 10),
-        createdBy: userRequest.id,
         role: databaseRole.id,
         profilePicture: databaseProfilePicture?.id || null,
         email,
@@ -179,7 +177,7 @@ export class UsersService {
         description: `User ${ user._id } was created.`,
         module: 'Users',
         createdAt: this.dayjs.getCurrentDateTime(),
-        user: userRequest.id
+        user: user.id
       })
       return this.formatReturnData(user)
     } catch (error) {
