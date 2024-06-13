@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsNumber, IsPositive, IsString } from 'class-validator'
+import { IsArray, IsBoolean, IsNumber, IsPositive, IsString } from 'class-validator'
 
 export class CreateOfferDto {
   
@@ -14,7 +14,27 @@ export class CreateOfferDto {
   @ApiProperty({ type: String, description: 'Offer description', example: 'We require a frontend developer with technical skills in...' })
   @IsString()
   description: string
-  
+
+  @ApiProperty({ type: String, description: 'Offer position', example: 'Software Engineer' })
+  @IsString()
+  position: string
+
+  @ApiProperty({ type: Number, description: 'Offer required years of experience', example: 8 })
+  @IsString()
+  yearsOfExperience: number
+
+  @ApiProperty({ type: [ String ], description: 'Array of offer keywords', example: ['frontend','angular','vue','javascript'] })
+  @IsArray()
+  keywords: string[]
+
+  @ApiProperty({ type: String, description: 'Offer max hiring date - Format DD/MM/YYYY.', example: '01/01/1900' })
+  @IsString()
+  hiringDate: string
+
+  @ApiProperty({ type: String, description: 'Offer type of contract', example: 'Permanent' })
+  @IsString()
+  typeOfContract: string
+
   @ApiProperty({ type: Number, description: 'Offer salary min range', example: 3000 })
   @IsNumber()
   @IsPositive()

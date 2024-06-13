@@ -32,11 +32,31 @@ export class Offer extends Document {
   @Prop({ type: String, required: true })
   description: string;
   
-  @ApiProperty({ description: 'Offer salary min range', example: '3000' })
+  @ApiProperty({ description: 'Offer position', example: 'Software Engineer' })
+  @Prop({ type: String, required: true })
+  position: string
+  
+  @ApiProperty({ description: 'Offer required years of experience', example: 8 })
+  @Prop({ type: Number, required: true })
+  yearsOfExperience: number
+  
+  @ApiProperty({ description: 'Array of offer keywords', example: ['frontend','angular','vue','javascript'] })
+  @Prop({ type: [ String ], required: true })
+  keywords: string[]
+
+  @ApiProperty({ example: '01/01/1900', description: 'Offer max hiring date - Format DD/MM/YYYY.' })
+  @Prop({ type: String, required: true })
+  hiringDate: string
+  
+  @ApiProperty({  description: 'Offer type of contract', example: 'Permanent' })
+  @Prop({ type: String, required: true })
+  typeOfContract: string
+  
+  @ApiProperty({ description: 'Offer salary min range', example: 3000 })
   @Prop({ type: String, required: true })
   salaryMin: number;
   
-  @ApiProperty({ description: 'Offer salary max range', example: '4100' })
+  @ApiProperty({ description: 'Offer salary max range', example: 4100 })
   @Prop({ type: String, required: true })
   salaryMax: number;
 
