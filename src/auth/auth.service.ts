@@ -156,7 +156,7 @@ export class AuthService {
     */
   public resetPassword = async (loginDto: LoginDto, clientIp: string): Promise<void> => {
     try {
-      const { email } = loginDto;
+      const { password, email } = loginDto;
       const user = await this.userModel
         .findOne({ email: email.toLowerCase().trim() })
       if(!user) {
@@ -167,7 +167,7 @@ export class AuthService {
       }
       await this.userModel.updateOne(
         { _id: user.id },
-        { password: bcrypt.hashSync(`${ email }`, 10) });
+        { password: bcrypt.hashSync(`${ password }`, 10) });
       await this.trackModel.create({
         ip: clientIp,
         description: `User ${ user._id } has reset password.`,
