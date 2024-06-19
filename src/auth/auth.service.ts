@@ -154,9 +154,9 @@ export class AuthService {
     * @throws UnauthorizedException - Throws this exception if no user is found with the provided email, or the
     *                                user is not active, indicating that the operation cannot proceed.
     */
-  public resetPassword = async (loginDto: LoginDto, clientIp: string): Promise<void> => {
+  public resetPassword = async (loginDto: LoginDto, clientIp: string): Promise<LoginResponse> => {
     try {
-      const { password, email } = loginDto;
+      const { email } = loginDto;
       const user = await this.userModel
         .findOne({ email: email.toLowerCase().trim() })
       if(!user) {
@@ -167,7 +167,7 @@ export class AuthService {
       }
       await this.userModel.updateOne(
         { _id: user.id },
-        { password: bcrypt.hashSync(`${ password }`, 10) });
+        { password: bcrypt.hashSync(`${ this.utils.generatePassword() }`, 10) });
       await this.trackModel.create({
         ip: clientIp,
         description: `User ${ user._id } has reset password.`,
@@ -175,7 +175,7 @@ export class AuthService {
         createdAt: this.dayjs.getCurrentDateTime(),
         user
       })
-      return
+      return this.formatReturnData(user)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
