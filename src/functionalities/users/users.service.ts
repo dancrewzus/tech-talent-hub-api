@@ -161,7 +161,7 @@ export class UsersService {
         }
       }
       const user = await this.userModel.create({
-        password: bcrypt.hashSync(`${ password ? password : email }`, 10),
+        password: bcrypt.hashSync(`${ password }`, 10),
         role: databaseRole.id,
         profilePicture: databaseProfilePicture?.id || null,
         email,
@@ -379,7 +379,7 @@ export class UsersService {
         throw new NotFoundException(error.USER_NOT_FOUND)
       }
       await user.updateOne({ 
-        password: bcrypt.hashSync(`${ user.email.toLowerCase().trim() }`, 10),
+        password: bcrypt.hashSync(`${ this.utils.generatePassword() }`, 10),
         updatedAt: this.dayjs.getCurrentDateTime(),
         isLogged: false,
       });
