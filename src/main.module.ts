@@ -11,6 +11,8 @@ import { DatabaseModule } from './config/database.module'
 import { CommonModule } from './common/common.module'
 import configurationFile from './config/env.config'
 import { AuthModule } from './auth/auth.module'
+import { ArticlesModule } from './articles/articles.module';
+import { ArticlesController } from './articles/articles.controller';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { AuthModule } from './auth/auth.module'
     AuthModule,
     CommonModule,
     FunctionalitiesModule,
+    ArticlesModule,
   ],
+  controllers: [ArticlesController],
 })
 export class MainModule {}

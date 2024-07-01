@@ -11,4 +11,5 @@ export const error = {
   TRACK_NOT_ACCESS: "You don't have access to see tracks",
   CATEGORY_NOT_FOUND: 'Category not found.',
   OFFER_NOT_FOUND: 'Offer not found.',
+  ARTICLE_NOT_FOUND: 'Article not found.',
 }

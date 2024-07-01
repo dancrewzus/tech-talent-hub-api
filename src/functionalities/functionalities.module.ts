@@ -8,6 +8,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { TracksModule } from './tracks/tracks.module'
 import { CategoriesModule } from './categories/categories.module'
 import { OffersModule } from './offers/offers.module'
+import { ArticlesModule } from './articles/articles.module';
 
 
 @Module({
@@ -20,6 +21,7 @@ import { OffersModule } from './offers/offers.module'
     NotificationsModule,
     CategoriesModule,
     OffersModule,
+    ArticlesModule,
   ],
   exports: [ ],
 })
