@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt'
 
 import { CreateUserDto } from 'src/functionalities/users/dto/create-user.dto'
 import { Track } from 'src/functionalities/tracks/entities/track.entity'
+import { Image } from 'src/functionalities/images/entities/image.entity'
 import { LoginResponse } from './interfaces/login-response.interface'
 import { Role } from 'src/functionalities/roles/entities/role.entity'
 import { User } from 'src/functionalities/users/entities/user.entity'
@@ -21,6 +22,7 @@ export class AuthService {
   
   constructor(
     @InjectModel(Track.name, 'default') private readonly trackModel: Model<Track>,
+    @InjectModel(Image.name, 'default') private readonly imageModel: Model<Image>,
     @InjectModel(User.name, 'default') private readonly userModel: Model<User>,
     @InjectModel(Role.name, 'default') private readonly roleModel: Model<Role>,
     private readonly handleErrors: HandleErrors,
@@ -237,24 +239,29 @@ export class AuthService {
     */
   public register = async (createUserDto: CreateUserDto, clientIp: string): Promise<LoginResponse> => {
     try {
-      const { role, password, ...userData } = createUserDto;
-      let roleId = null;
-      const roleById = await this.roleModel.findById(role);
-      if (!roleById) {
-        const primaryRole = await this.roleModel.findOne({ primary: true });
-        if (!primaryRole) {
-          throw new NotFoundException(error.ROLE_NOT_FOUND);
-        }
-        roleId = primaryRole.id;
-      } else {
-        roleId = roleById.id;
+      const { role, password, email, profilePicture, ...data } = createUserDto;
+      const databaseRole = await this.roleModel.findOne({ name: role as string || 'client' as string })
+      if(!databaseRole) {
+        throw new NotFoundException(`Role with id or name "${ role }" not found`)
       }
-      userData.email = userData.email.toLowerCase().trim();
+      let databaseProfilePicture = null
+      if(profilePicture !== '') {
+        databaseProfilePicture = await this.imageModel.findOne({ _id : profilePicture })
+        if(!databaseProfilePicture) {
+          throw new NotFoundException(`Image with id "${ profilePicture }" not found`)
+        }
+      }
       const user = await this.userModel.create({
         password: bcrypt.hashSync(`${ password }`, 10),
-        role: roleId, 
-        ...userData
+        role: databaseRole.id,
+        profilePicture: databaseProfilePicture?.id || null,
+        email,
+        createdAt: this.dayjs.getCurrentDateTime(),
+        updatedAt: this.dayjs.getCurrentDateTime(),
+        ...data
       });
+      user.role = databaseRole
+      user.profilePicture = databaseProfilePicture
       await this.trackModel.create({
         ip: clientIp,
         description: `User ${ user._id } has created.`,

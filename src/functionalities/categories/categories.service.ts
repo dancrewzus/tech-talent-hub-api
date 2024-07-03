@@ -144,8 +144,9 @@ export class CategoriesService {
    *                            it is caught and handled appropriately.
    * @throws {Error} Handles and logs any errors that occur during the execution.
    */
-  public findCategories = async (paginationDto: any) => {
-    const { limit, offset, filter } = paginationDto ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
+  public findCategories = async (paginationDto: any = {}) => {
+    const isEmptyPagination = paginationDto && paginationDto !== 'null' ? Object.keys(paginationDto).length === 0 : true
+    const { limit, offset, filter } = !isEmptyPagination ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
     const setOffset = offset === undefined ? 0 : offset
     const setLimit = limit === undefined ? this.defaultLimit : limit
     const isSearch = filter !== '' ? true : false
@@ -184,7 +185,7 @@ export class CategoriesService {
       return {
         data: {
           pagination: categories?.pagination || {},
-          categories: categories?.docs.map((categories) => categories),
+          categories: categories?.docs.map((cat) => cat),
         }
       }
     } catch (error) {

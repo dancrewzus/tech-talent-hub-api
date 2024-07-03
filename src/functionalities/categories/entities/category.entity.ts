@@ -15,6 +15,7 @@ dayjs.extend(utc)
 dayjs.tz.setDefault('America/Caracas')
 
 import { User } from '../../users/entities/user.entity';
+import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Schema()
 export class Category extends Document {
@@ -49,4 +50,5 @@ export class Category extends Document {
 }
 
 export const CategorySchema = SchemaFactory.createForClass( Category )
+CategorySchema.plugin(mongoosePaginate)
 
