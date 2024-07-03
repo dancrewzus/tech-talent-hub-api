@@ -36,7 +36,7 @@ export class CategoriesController {
   }
 
   @Get()
-  @Auth()
+  // @Auth()
   @ApiResponse({ status: 200, description: 'Users found', type: [User] })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

@@ -11,6 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'
 import { JWT_CONFIG } from 'src/config/jwt.config'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
+import { Image, ImageSchema } from 'src/functionalities/images/entities/image.entity'
 
 @Module({
   controllers: [ AuthController ],
@@ -29,6 +30,10 @@ import { AuthService } from './auth.service'
       {
         name: Role.name,
         schema: RoleSchema
+      },
+      {
+        name: Image.name,
+        schema: ImageSchema
       },
     ], 'default'),
     PassportModule.register({ defaultStrategy: 'jwt' }),
