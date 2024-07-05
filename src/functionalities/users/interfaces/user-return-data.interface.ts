@@ -1,4 +1,4 @@
-export interface UserReturnData { 
+export interface UserReturnData {
   permission: string; 
   id: any; 
   email: string; 

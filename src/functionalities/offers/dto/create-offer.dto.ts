@@ -20,7 +20,8 @@ export class CreateOfferDto {
   position: string
 
   @ApiProperty({ type: Number, description: 'Offer required years of experience', example: 8 })
-  @IsString()
+  @IsNumber()
+  @IsPositive()
   yearsOfExperience: number
 
   @ApiProperty({ type: [ String ], description: 'Array of offer keywords', example: ['frontend','angular','vue','javascript'] })

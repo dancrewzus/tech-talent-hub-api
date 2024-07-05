@@ -93,7 +93,8 @@ export class NotificationsService {
   public findAll = async (paginationDto: any, userRequest: User): Promise<object> => {
     try {
       const isAdmin = ['root', 'admin'].includes(userRequest?.role?.name)
-      const { limit, offset, filter } = paginationDto ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
+      const isEmptyPagination = paginationDto && paginationDto !== 'null' ? Object.keys(paginationDto).length === 0 : true
+      const { limit, offset, filter } = !isEmptyPagination ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
       const setOffset = offset === undefined ? 0 : offset
       const setLimit = limit === undefined ? this.defaultLimit : limit
       const isSearch = filter !== '' ? true : false
