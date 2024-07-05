@@ -19,6 +19,10 @@ import { Category, CategorySchema } from '../categories/entities/category.entity
     CommonModule,
     MongooseModule.forFeature([
       {
+        name: Track.name,
+        schema: TrackSchema
+      },
+      {
         name: Article.name,
         schema: ArticleSchema
       },
