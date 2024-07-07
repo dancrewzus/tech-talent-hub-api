@@ -146,7 +146,7 @@ export class CategoriesService {
    */
   public findCategories = async (paginationDto: any = {}) => {
     const isEmptyPagination = paginationDto && paginationDto !== 'null' ? Object.keys(paginationDto).length === 0 : true
-    const { limit, offset, filter } = !isEmptyPagination ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
+    const { limit, offset, filter } = !isEmptyPagination ? paginationDto : { limit: this.defaultLimit, offset: 0, filter: '' };
     const setOffset = offset === undefined ? 0 : offset
     const setLimit = limit === undefined ? this.defaultLimit : limit
     const isSearch = filter !== '' ? true : false
