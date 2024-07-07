@@ -43,7 +43,7 @@ export class CategoriesController {
   @ApiResponse({ status: 404, description: 'Not found' })
   @ApiResponse({ status: 500, description: 'Internal error.' })
   findAll(
-    @Query('pagination') paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationDto,
   ) {
     return this.categoriesService.findCategories(paginationDto);
   }
