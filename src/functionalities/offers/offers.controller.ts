@@ -44,8 +44,9 @@ export class OffersController {
   @ApiResponse({ status: 500, description: 'Internal error.' })
   findAll(
     @Query('pagination') paginationDto: PaginationDto,
+    @GetUser() user: User
   ) {
-    return this.offersService.findOffers(paginationDto);
+    return this.offersService.findOffers(paginationDto, user);
   }
 
   @Get(':search')
@@ -75,6 +76,21 @@ export class OffersController {
     @GetUser() user: User
   ) {
     return this.offersService.update(id, updateCategoryDto, user, clientIp);
+  }
+  
+  @Patch('/apply/:id')
+  @Auth(ValidRoles.Client)
+  @ApiResponse({ status: 200, description: 'User updated', type: Offer })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 500, description: 'Internal error.' })
+  applyToOffer(
+    @Ip() clientIp: string,
+    @Param('id', ParseMongoIdPipe) id: string,
+    @GetUser() user: User
+  ) {
+    return this.offersService.applyToOffer(id, user, clientIp);
   }
 
   @Delete(':id')

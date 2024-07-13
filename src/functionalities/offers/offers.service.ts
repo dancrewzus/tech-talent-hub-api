@@ -21,6 +21,7 @@ export class OffersService {
   constructor(
     @InjectModel(Category.name, 'default') private readonly categoryModel: PaginateModel<Category>,
     @InjectModel(Offer.name, 'default') private readonly offerModel: PaginateModel<Offer>,
+    @InjectModel(User.name, 'default') private readonly userModel: PaginateModel<User>,
     @InjectModel(Track.name, 'default') private readonly trackModel: Model<Track>,
     private readonly configService: ConfigService,
     private readonly handleErrors: HandleErrors,
@@ -28,6 +29,14 @@ export class OffersService {
     private readonly utils: Utils,
   ) {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
+  }
+
+  private formatReturnData = (offer: Offer, isAdmin: boolean) => {
+    const { applies, ...restOfData } = offer
+    return {
+      applies: isAdmin ? applies : applies.length,
+      ...restOfData
+    }
   }
 
   /**
@@ -151,7 +160,7 @@ export class OffersService {
    *                            it is caught and handled appropriately.
    * @throws {Error} Handles and logs any errors that occur during the execution.
    */
-  public findOffers = async (paginationDto: any = {}) => {
+  public findOffers = async (paginationDto: any = {}, userRequest: User) => {
     const isEmptyPagination = paginationDto && paginationDto !== 'null' ? Object.keys(paginationDto).length === 0 : true
     const { limit, offset, filter } = !isEmptyPagination ? JSON.parse(paginationDto) : { limit: this.defaultLimit, offset: 0, filter: '' };
     const setOffset = offset === undefined ? 0 : offset
@@ -164,7 +173,10 @@ export class OffersService {
         populate: [
           {
             path: 'createdBy'
-          }
+          },
+          {
+            path: 'applies'
+          },
         ],
         sort: { createdAt: 1 },
         customLabels: {
@@ -188,11 +200,12 @@ export class OffersService {
           ]
         }
       }
+      const isAdmin = userRequest.role?.name !== 'client'
       const offers = await this.offerModel.paginate(data, options)
       return {
         data: {
           pagination: offers?.pagination || {},
-          offers: offers?.docs.map((offers) => offers),
+          offers: offers?.docs.map((offer) => this.formatReturnData(offer, isAdmin)),
         }
       }
     } catch (error) {
@@ -286,6 +299,7 @@ export class OffersService {
       if(!offer) {
         throw new NotFoundException(error.OFFER_NOT_FOUND)
       }
+      // TODO. Si la oferta tiene postulaciones no debe eliminar
       await offer.updateOne({ 
         deleted: true,
         updatedAt: this.dayjs.getCurrentDateTime(),
@@ -299,6 +313,36 @@ export class OffersService {
         user: userRequest.id
       })
       return
+    } catch (error) {
+      this.handleErrors.handleExceptions(error)
+    }
+  }
+
+  public applyToOffer = async (id: string, userRequest: User, clientIp: string) => {
+    try {
+      const offer = await this.offerModel.findById(id).populate('applies')
+      if(!offer) {
+        throw new NotFoundException(error.OFFER_NOT_FOUND)
+      }
+
+      const user = await this.userModel.findById(userRequest.id).populate('applies')
+      if(!user) {
+        throw new NotFoundException(error.USER_NOT_FOUND)
+      }
+
+      offer.applies.push(userRequest.id)
+      await offer.save()
+
+      user.applies.push(offer._id)
+      await user.save()
+
+      await this.trackModel.create({
+        ip: clientIp,
+        description: `User ${ userRequest.id } apply to offer ${ offer._id }.`,
+        module: 'Offers',
+        createdAt: this.dayjs.getCurrentDateTime(),
+        user: userRequest.id
+      })
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
