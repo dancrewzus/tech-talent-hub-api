@@ -32,10 +32,29 @@ export class OffersService {
   }
 
   private formatReturnData = (offer: Offer, isAdmin: boolean) => {
-    const { applies, ...restOfData } = offer
+    const { applies } = offer
     return {
+      id: offer.id || '',
+      title: offer.title || '',
+      slug: offer.slug || '',
+      description: offer.description || '',
+      position: offer.position || '',
+      yearsOfExperience: offer.yearsOfExperience || 0,
+      keywords: offer.keywords || [],
+      hiringDate: offer.hiringDate || '',
+      typeOfContract: offer.typeOfContract || '',
+      salaryMin: offer.salaryMin || 0,
+      salaryMax: offer.salaryMax || 0,
+      currency: offer.currency || '',
+      country: offer.country || '',
+      remote: offer.remote || false,
+      category: offer.category || '',
+      createdBy: offer.createdBy || '',
+      deletedAt: offer.deletedAt || '',
+      createdAt: offer.createdAt || '',
+      updatedAt: offer.updatedAt || '',
+      deleted: offer.deleted || false,
       applies: isAdmin ? applies : applies.length,
-      ...restOfData
     }
   }
 
