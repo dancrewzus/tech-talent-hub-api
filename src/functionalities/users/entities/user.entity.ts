@@ -4,6 +4,7 @@ import * as mongoosePaginate from 'mongoose-paginate-v2'
 import { ApiProperty } from '@nestjs/swagger';
 
 import { Image } from 'src/functionalities/images/entities/image.entity';
+import { Offer } from 'src/functionalities/offers/entities/offer.entity';
 import { Role } from 'src/functionalities/roles/entities/role.entity';
 
 @Schema()
@@ -65,6 +66,10 @@ export class User extends Document {
 
   @Prop({ type: Boolean, default: false })
   deleted: boolean;
+
+  @ApiProperty({ description: 'List of offers that are applied.', type: [String] })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Offer' }], select: false })
+  applies: Offer[];
 }
 
 export const UserSchema = SchemaFactory.createForClass( User )
