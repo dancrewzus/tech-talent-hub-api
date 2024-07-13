@@ -96,6 +96,10 @@ export class Offer extends Document {
   @ApiProperty({ example: false, description: 'Soft delete' })
   @Prop({ type: Boolean, default: false })
   deleted: boolean;
+
+  @ApiProperty({ description: 'List of users that are applied to this offers.', type: [String] })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }], select: false })
+  applies: User[];
 }
 
 export const OfferSchema = SchemaFactory.createForClass( Offer )
