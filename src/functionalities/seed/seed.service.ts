@@ -9,6 +9,8 @@ import { CloudAdapter } from 'src/common/adapters/cloud.adapter'
 import { Image } from '../images/entities/image.entity'
 import { User } from '../users/entities/user.entity'
 import { SeedData } from './data/data.seed'
+import { Category } from '../categories/entities/category.entity'
+import { Offer } from '../offers/entities/offer.entity'
 
 @Injectable()
 export class SeedService {
@@ -16,10 +18,14 @@ export class SeedService {
   private logger
 
   constructor(    
+    @InjectModel(Category.name, 'production') private readonly categoryModelProduction: Model<Category>,
+    @InjectModel(Offer.name, 'production') private readonly offerModelProduction: Model<Offer>,
     @InjectModel(Image.name, 'production') private readonly imageModelProduction: Model<Image>,
     @InjectModel(Role.name, 'production') private readonly roleModelProduction: Model<Role>,
     @InjectModel(User.name, 'production') private readonly userModelProduction: Model<User>,
 
+    @InjectModel(Category.name, 'test') private readonly categoryModel: Model<Category>,
+    @InjectModel(Offer.name, 'test') private readonly offerModel: Model<Offer>,
     @InjectModel(Image.name, 'test') private readonly imageModel: Model<Image>,
     @InjectModel(Role.name, 'test') private readonly roleModel: Model<Role>,
     @InjectModel(User.name, 'test') private readonly userModel: Model<User>,
@@ -133,16 +139,22 @@ export class SeedService {
   public cloneDatabase = async ({ }) => {
     try {
       const [
+        categories,
+        offers,
         images,
         roles,
         users
       ] = await Promise.all([
+        this.categoryModelProduction.find(),
+        this.offerModelProduction.find(),
         this.imageModelProduction.find(),
         this.roleModelProduction.find(),
         this.userModelProduction.find(),
       ])
 
       await Promise.all([
+        this.categoryModel.deleteMany(),
+        this.offerModel.deleteMany(),
         this.imageModel.deleteMany(),
         this.roleModel.deleteMany(),
         this.userModel.deleteMany(),
@@ -150,6 +162,8 @@ export class SeedService {
       await this.roleModel.insertMany(roles)
       await this.userModel.insertMany(users)
       await this.imageModel.insertMany(images)
+      await this.categoryModel.insertMany(categories)
+      await this.offerModel.insertMany(offers)
 
       return 'Backup completed successfully'
 

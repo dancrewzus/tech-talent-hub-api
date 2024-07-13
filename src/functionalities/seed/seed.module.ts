@@ -10,6 +10,8 @@ import { CommonModule } from 'src/common/common.module'
 import { SeedController } from './seed.controller'
 import { SeedService } from './seed.service'
 import { SeedData } from './data/data.seed'
+import { Category, CategorySchema } from '../categories/entities/category.entity'
+import { Offer, OfferSchema } from '../offers/entities/offer.entity'
 
 const MODELS = [
   {
@@ -23,6 +25,14 @@ const MODELS = [
   {
     name: Image.name,
     schema: ImageSchema
+  },
+  {
+    name: Category.name,
+    schema: CategorySchema
+  },
+  {
+    name: Offer.name,
+    schema: OfferSchema
   },
 ]
 
