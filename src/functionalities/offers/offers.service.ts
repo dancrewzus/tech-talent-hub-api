@@ -116,6 +116,7 @@ export class OffersService {
       const offer = await this.offerModel.create({
         title,
         slug,
+        category: categoryDb._id,
         createdBy: userRequest.id,
         createdAt: this.dayjs.getCurrentDateTime(),
         updatedAt: this.dayjs.getCurrentDateTime(),

@@ -7,10 +7,6 @@ export class CreateOfferDto {
   @IsString()
   title: string
   
-  @ApiProperty({ type: String, description: 'Offer title slug', example: 'frontend-developer' })
-  @IsString()
-  slug: string
-  
   @ApiProperty({ type: String, description: 'Offer description', example: 'We require a frontend developer with technical skills in...' })
   @IsString()
   description: string
