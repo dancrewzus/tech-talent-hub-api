@@ -31,7 +31,7 @@ export class OffersService {
     this.defaultLimit = this.configService.get<number>('defaultLimit')
   }
 
-  private formatReturnData = (offer: Offer, isAdmin: boolean) => {
+  private formatReturnData = (offer: Offer, isAdmin: boolean = false) => {
     const { applies } = offer
     return {
       id: offer.id || '',
@@ -291,7 +291,7 @@ export class OffersService {
         createdAt: this.dayjs.getCurrentDateTime(),
         user: userRequest.id
       })
-      return offer
+      return this.formatReturnData(offer)
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
@@ -362,6 +362,7 @@ export class OffersService {
         createdAt: this.dayjs.getCurrentDateTime(),
         user: userRequest.id
       })
+      return
     } catch (error) {
       this.handleErrors.handleExceptions(error)
     }
